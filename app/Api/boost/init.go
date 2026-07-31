@@ -1,0 +1,5 @@
+package apiBoost
+
+func Init() {
+
+}

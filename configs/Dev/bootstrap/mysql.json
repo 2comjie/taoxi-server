@@ -1,0 +1,12 @@
+{
+  "game": {
+    "dsn": "root:123@tcp(localhost:3306)/taoxi-game?charset=utf8mb4&parseTime=True&loc=Local",
+    "open_conn": 20,
+    "idle_conn": 10
+  },
+  "user": {
+    "dsn": "root:123@tcp(localhost:3306)/taoxi-user?charset=utf8mb4&parseTime=True&loc=Local",
+    "open_conn": 20,
+    "idle_conn": 10
+  }
+}

@@ -7,6 +7,7 @@ import (
 	"github.com/2comjie/taoxi-server/flags"
 	"github.com/2comjie/taoxi-server/internal/deploy/external"
 	"github.com/2comjie/taoxi-server/internal/deploy/instruction"
+	"github.com/2comjie/taoxi-server/pkg/pprof"
 	netx "github.com/2comjie/wali/core/net"
 	"github.com/2comjie/wali/deploy"
 	redisLocator "github.com/2comjie/wali/locator/redis"
@@ -47,10 +48,11 @@ func Init(options ...deploy.Option) {
 			panic(err)
 		}
 
-		// 3. 初始化 注册中心/服务发现/locator
+		// 3. 初始化 注册中心/服务发现/locator/pprof
 		options = append(options, deploy.WithRegistry(redisRegistry.NewRegistry(external.RedisRegistry())))
 		options = append(options, deploy.WithDiscover(redisRegistry.NewDiscover(external.RedisRegistry())))
 		options = append(options, deploy.WithLocator(redisLocator.NewProvider(external.RedisLocator())))
+		options = append(options, deploy.WithComponents(pprof.StartPprof(flags.ServiceName, 0)))
 
 		// 4. 初始化 rpc 服务
 		privateIP, err := netx.PrivateIP()

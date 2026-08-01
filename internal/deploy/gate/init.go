@@ -11,13 +11,18 @@ import (
 	"github.com/2comjie/taoxi-server/internal/deploy/instruction"
 	"github.com/2comjie/taoxi-server/pkg/jwt"
 	"github.com/2comjie/taoxi-server/pkg/pprof"
+	"github.com/2comjie/wali/app/gate"
 	netx "github.com/2comjie/wali/core/net"
+	"github.com/2comjie/wali/core/zipper"
 	"github.com/2comjie/wali/deploy"
 	"github.com/2comjie/wali/etc"
 	"github.com/2comjie/wali/locator"
 	redisLocator "github.com/2comjie/wali/locator/redis"
+	"github.com/2comjie/wali/logx"
 	"github.com/2comjie/wali/network"
+	netKcp "github.com/2comjie/wali/network/transport/kcp"
 	netTcp "github.com/2comjie/wali/network/transport/tcp"
+	netWs "github.com/2comjie/wali/network/transport/ws"
 	redisRegistry "github.com/2comjie/wali/registry/redis"
 )
 
@@ -69,6 +74,14 @@ func Init(options ...deploy.Option) {
 		if err != nil {
 			panic(err)
 		}
+		kcpListener, err := netKcp.Listen(net.JoinHostPort(privateIP, "0"))
+		if err != nil {
+			panic(err)
+		}
+		wsListener, err := netWs.Listen(net.JoinHostPort(privateIP, "0"))
+		if err != nil {
+			panic(err)
+		}
 
 		publicKey := etc.String("taoxi-jwt-key", "taoxi-jwt-public-key")
 		options = append(options, deploy.WithNetworkOptions(
@@ -79,10 +92,39 @@ func Init(options ...deploy.Option) {
 				}
 				return uid, nil
 			})),
-			network.WithListener(tcpListener,
-			)))
+			network.WithListener(tcpListener),
+			network.WithListener(kcpListener),
+			network.WithListener(wsListener),
+			network.WithZipper(zipper.NewSnappy()),
+		),
+		)
+		options = append(options, deploy.WithGateErrorHandler(func(ctx *gate.Context, err error) {
+			logx.Warnf("gate error: %v ctx: %v", err, ctx)
+		}))
+		options = append(options, deploy.WithGateHooks(network.Hooks{
+			OnSessionStart: func(session *network.Session) {
+				logx.Infof("gate session start: %v", session)
+			},
+			OnSessionEnd: func(session *network.Session) {
+				logx.Infof("gate session end: %v", session)
+			},
+			OnSessionBind: func(session *network.Session) error {
+				logx.Infof("gate session bind: %v", session)
+				return nil
+			},
+			OnHeartbeat: func(session *network.Session) {
+				logx.Debugf("gate session heartbeat: %v", session)
+			},
+			OnReq: func(context *network.ReqContext) {
+				logx.Debugf("gate req: %v", context)
+			},
+		}))
 
 		global, err = deploy.Gate(options...)
+		if err != nil {
+			panic(err)
+		}
+		err = global.Run()
 		if err != nil {
 			panic(err)
 		}

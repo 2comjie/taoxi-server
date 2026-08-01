@@ -1,7 +1,9 @@
 package gateDeploy
 
 import (
+	"crypto/ed25519"
 	"fmt"
+	"net"
 	"sync"
 
 	"github.com/2comjie/taoxi-server/flags"
@@ -11,9 +13,11 @@ import (
 	"github.com/2comjie/taoxi-server/pkg/pprof"
 	netx "github.com/2comjie/wali/core/net"
 	"github.com/2comjie/wali/deploy"
+	"github.com/2comjie/wali/etc"
 	"github.com/2comjie/wali/locator"
 	redisLocator "github.com/2comjie/wali/locator/redis"
 	"github.com/2comjie/wali/network"
+	netTcp "github.com/2comjie/wali/network/transport/tcp"
 	redisRegistry "github.com/2comjie/wali/registry/redis"
 )
 
@@ -43,6 +47,9 @@ func Init(options ...deploy.Option) {
 			panic(err)
 		}
 		err = external.InitRedis(center)
+		if err != nil {
+			panic(err)
+		}
 
 		// 3. 初始化 注册中心/服务发现/locator/pprof
 		options = append(options, deploy.WithRegistry(redisRegistry.NewRegistry(external.RedisRegistry())))
@@ -58,12 +65,22 @@ func Init(options ...deploy.Option) {
 		options = append(options, deploy.WithRPCHost(privateIP))
 
 		// 5. 初始化网关 net 服务
+		tcpListener, err := netTcp.Listen(net.JoinHostPort(privateIP, "0"))
+		if err != nil {
+			panic(err)
+		}
+
+		publicKey := etc.String("taoxi-jwt-key", "taoxi-jwt-public-key")
 		options = append(options, deploy.WithNetworkOptions(
 			network.WithAuther(network.AuthFunc(func(token []byte) (uid string, err error) {
-				jwt.Generate()
+				uid, err = jwt.Auth(ed25519.PublicKey(publicKey), token)
+				if err != nil {
+					return "", err
+				}
+				return uid, nil
 			})),
-
-		))
+			network.WithListener(tcpListener,
+			)))
 
 		global, err = deploy.Gate(options...)
 		if err != nil {

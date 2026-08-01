@@ -29,7 +29,7 @@ func CheckClientSign() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header, ok := midef.GetClientRequestHeader(c)
 		if !ok {
-			logx.WithField("url", c.Request.RequestURI).WithField("header", c.Request.Header).Error("获取http头失败")
+			logx.WithField("url", c.Request.RequestURI).Error("获取http头失败")
 			xhttp.Fail(c, http.StatusBadRequest, "获取http头失败", nil)
 			c.Abort()
 			return
@@ -79,7 +79,7 @@ func CheckClientSign() gin.HandlerFunc {
 		base64String := base64.StdEncoding.EncodeToString(hexString)
 
 		if base64String != accessToken {
-			logx.WithField("url", c.Request.RequestURI).WithField("header", c.Request.Header).Warn("签名不正确")
+			logx.WithField("url", c.Request.RequestURI).Warn("签名不正确")
 			xhttp.Fail(c, http.StatusBadRequest, "签名校验失败", nil)
 			c.Abort()
 			return

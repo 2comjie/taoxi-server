@@ -1,0 +1,7 @@
+{
+  "logger": {
+    "path": "./logs",
+    "level": "debug",
+    "stdout": true
+  }
+}

@@ -64,6 +64,7 @@ func Init() {
 					logx.Errorf("gin-server: 服务异常退出 err=%v", err)
 				}
 			})
+			logx.Infof("gin-server: 服务器启动 %s", webServer.Addr)
 			return nil
 		},
 		MShutdown: func(ctx context.Context) error {

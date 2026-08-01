@@ -3,6 +3,8 @@ package inout
 import (
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	midef "github.com/2comjie/taoxi-server/pkg/middleware/def"
@@ -12,25 +14,41 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func StdHandler[Req any, Rsp any](handler func(ctx *midef.Header, req *Req) (*Rsp, *stderr.Error)) gin.HandlerFunc {
+type StdFunc[Req any, Rsp any] func(ctx *midef.Header, req *Req) (*Rsp, *stderr.Error)
+
+func UidHandler[Req any, Rsp any](handler StdFunc[Req, Rsp]) gin.HandlerFunc {
+	return stdHandler(handler, true)
+}
+
+func NoUidHandler[Req any, Rsp any](handler StdFunc[Req, Rsp]) gin.HandlerFunc {
+	return stdHandler(handler, false)
+}
+
+func stdHandler[Req any, Rsp any](handler StdFunc[Req, Rsp], checkUID bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		header, ok := midef.GetClientRequestHeader(c)
 		if !ok {
-			logx.WithField("url", c.Request.RequestURI).WithField("header", c.Request.Header).Error("获取http头失败")
+			logx.WithField("url", c.Request.RequestURI).Error("获取http头失败")
 			xhttp.Fail(c, http.StatusBadRequest, "获取http头失败", nil)
+			c.Abort()
+			return
+		}
+		if checkUID && header.UID == "" {
+			xhttp.Fail(c, http.StatusUnauthorized, "未提供有效的访问令牌", nil)
 			c.Abort()
 			return
 		}
 		var req Req
 		err := c.ShouldBind(&req)
 		if err != nil {
-			logx.WithField("url", c.Request.RequestURI).WithField("header", c.Request.Header).WithField("body", c.Request.Body).Error("解析请求参数失败")
+			logx.WithField("url", c.Request.RequestURI).Error("解析请求参数失败")
 			xhttp.Fail(c, http.StatusBadRequest, "请求解析失败", nil)
 			c.Abort()
+			return
 		}
 		rsp, stdErr := handler(header, &req)
 		if stdErr != nil {
-			xhttp.Response(stdErr.Code, stdErr.Msg, rsp)
+			xhttp.Fail(c, stdErr.Code, stdErr.Msg, rsp)
 			return
 		}
 		xhttp.Ok(c, rsp)
@@ -42,13 +60,14 @@ func NoHeadHandler[Req any, Rsp any](handler func(req *Req) (rsp *Rsp, stdErr *s
 		var req Req
 		err := c.ShouldBind(&req)
 		if err != nil {
-			logx.WithField("url", c.Request.RequestURI).WithField("header", c.Request.Header).WithField("body", c.Request.Body).Error("解析请求参数失败")
+			logx.WithField("url", c.Request.RequestURI).Error("解析请求参数失败")
 			xhttp.Fail(c, http.StatusBadRequest, "请求解析失败", nil)
 			c.Abort()
+			return
 		}
 		rsp, stdErr := handler(&req)
 		if stdErr != nil {
-			xhttp.Response(stdErr.Code, stdErr.Msg, rsp)
+			xhttp.Fail(c, stdErr.Code, stdErr.Msg, rsp)
 			return
 		}
 		xhttp.Ok(c, rsp)
@@ -67,12 +86,25 @@ func AccessLog() gin.HandlerFunc {
 
 		defer func() {
 			_ = c.Request.ParseForm()
-			accessLogMap["post_data"] = c.Request.PostForm.Encode()
+			accessLogMap["post_data"] = redactForm(c.Request.PostForm).Encode()
 			accessLogMap["bytes_send"] = c.Writer.Size()
 			logx.Infof("access_log: %v", accessLogMap)
 		}()
 		c.Next()
 	}
+}
+
+func redactForm(form url.Values) url.Values {
+	redacted := make(url.Values, len(form))
+	for key, values := range form {
+		lowerKey := strings.ToLower(key)
+		if strings.Contains(lowerKey, "token") || strings.Contains(lowerKey, "secret") || strings.Contains(lowerKey, "password") || lowerKey == "code" || lowerKey == "guest_id" {
+			redacted[key] = []string{"[REDACTED]"}
+			continue
+		}
+		redacted[key] = append([]string(nil), values...)
+	}
+	return redacted
 }
 
 func LogxLogger() gin.HandlerFunc {

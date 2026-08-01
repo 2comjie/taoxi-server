@@ -15,6 +15,7 @@ require (
 	github.com/redis/go-redis/v9 v9.19.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cast v1.10.0
+	golang.org/x/oauth2 v0.30.0
 )
 
 require (

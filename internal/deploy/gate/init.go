@@ -1,7 +1,6 @@
 package gateDeploy
 
 import (
-	"crypto/ed25519"
 	"fmt"
 	"net"
 	"sync"
@@ -83,10 +82,13 @@ func Init(options ...deploy.Option) {
 			panic(err)
 		}
 
-		publicKey := etc.String("taoxi-jwt-key", "taoxi-jwt-public-key")
+		publicKey, err := jwt.ParsePublicKey(etc.String(jwt.PublicKeyEnv))
+		if err != nil {
+			panic(fmt.Errorf("gateDeploy: 读取%s失败: %w", jwt.PublicKeyEnv, err))
+		}
 		options = append(options, deploy.WithNetworkOptions(
 			network.WithAuther(network.AuthFunc(func(token []byte) (uid string, err error) {
-				uid, err = jwt.Auth(ed25519.PublicKey(publicKey), token)
+				uid, err = jwt.Auth(publicKey, token)
 				if err != nil {
 					return "", err
 				}

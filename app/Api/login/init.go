@@ -27,7 +27,7 @@ const (
 )
 
 func Init(args modules.Modules, driver *entsql.Driver, newUID func() string, autoMigrate bool) error {
-	privateKey, err := jwt.ParsePrivateKey(etc.String(jwt.PrivateKeyEnv))
+	privateKey, err := jwt.ParsePrivateKey(etc.String(jwt.PrivateKeyEnv, "6QNmaXJ+0nPGEg4oWdhLS7M78VfDPxHN3O9EQ5IQ8wAcweG00kzN+CETgaunSd9g39eMCQdeyMmLtmfk4gtbRw=="))
 	if err != nil {
 		return fmt.Errorf("login: 读取%s失败: %w", jwt.PrivateKeyEnv, err)
 	}

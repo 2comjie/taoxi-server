@@ -82,7 +82,7 @@ func Init(options ...deploy.Option) {
 			panic(err)
 		}
 
-		publicKey, err := jwt.ParsePublicKey(etc.String(jwt.PublicKeyEnv))
+		publicKey, err := jwt.ParsePublicKey(etc.String(jwt.PublicKeyEnv, "HMHhtNJMzfghE4Grp0nfYN/XjAkHXsjJi7Zn5OILW0c="))
 		if err != nil {
 			panic(fmt.Errorf("gateDeploy: 读取%s失败: %w", jwt.PublicKeyEnv, err))
 		}

@@ -1,0 +1,30 @@
+{
+  "game": {
+    "addrs": [
+      "localhost:6379"
+    ],
+    "db": 1,
+    "PoolSize": 50
+  },
+  "user": {
+    "addrs": [
+      "localhost:6379"
+    ],
+    "db": 1,
+    "PoolSize": 50
+  },
+  "registry": {
+    "addrs": [
+      "localhost:6379"
+    ],
+    "db": 1,
+    "PoolSize": 50
+  },
+  "locator": {
+    "addrs": [
+      "localhost:6379"
+    ],
+    "db": 1,
+    "PoolSize": 50
+  }
+}

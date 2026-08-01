@@ -21,23 +21,3 @@ func Recovery() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
-func AccessLog() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		accessLogMap := make(map[string]any)
-		accessLogMap["method"] = c.Request.Method
-		accessLogMap["protocol"] = c.Request.Proto
-		accessLogMap["referer"] = c.Request.Referer()
-		accessLogMap["client_ip"] = c.ClientIP()
-		accessLogMap["uri"] = c.Request.URL.String()
-		accessLogMap["host"] = c.Request.Host
-
-		defer func() {
-			_ = c.Request.ParseForm()
-			accessLogMap["post_data"] = c.Request.PostForm.Encode()
-			accessLogMap["bytes_send"] = c.Writer.Size()
-			logx.Infof("access_log: %v", accessLogMap)
-		}()
-		c.Next()
-	}
-}

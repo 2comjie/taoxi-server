@@ -81,11 +81,12 @@ func Init() {
 
 	nodeDeploy.Init(deploy.WithComponents(webComponent))
 
-	if err := login.Init(args, external.MysqlUser(), nodeDeploy.App().RandString, flags.Env == flags.Local); err != nil {
+	err := login.Init(args, external.MysqlUser(), nodeDeploy.App().RandString, flags.Env == flags.Local)
+	if err != nil {
 		panic(err)
 	}
 	payment.Init(args)
-	err := nodeDeploy.App().Run()
+	err = nodeDeploy.App().Run()
 	if err != nil {
 		panic(err)
 	}

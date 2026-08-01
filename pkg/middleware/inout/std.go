@@ -1,7 +1,9 @@
 package inout
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	midef "github.com/2comjie/taoxi-server/pkg/middleware/def"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
@@ -51,4 +53,75 @@ func NoHeadHandler[Req any, Rsp any](handler func(req *Req) (rsp *Rsp, stdErr *s
 		}
 		xhttp.Ok(c, rsp)
 	}
+}
+
+func AccessLog() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		accessLogMap := make(map[string]any)
+		accessLogMap["method"] = c.Request.Method
+		accessLogMap["protocol"] = c.Request.Proto
+		accessLogMap["referer"] = c.Request.Referer()
+		accessLogMap["client_ip"] = c.ClientIP()
+		accessLogMap["uri"] = c.Request.URL.String()
+		accessLogMap["host"] = c.Request.Host
+
+		defer func() {
+			_ = c.Request.ParseForm()
+			accessLogMap["post_data"] = c.Request.PostForm.Encode()
+			accessLogMap["bytes_send"] = c.Writer.Size()
+			logx.Infof("access_log: %v", accessLogMap)
+		}()
+		c.Next()
+	}
+}
+
+func LogxLogger() gin.HandlerFunc {
+	return gin.LoggerWithFormatter(func(params gin.LogFormatterParams) string {
+		if params.StatusCode > 500 {
+			logInfo := buildFullLogInfo(params)
+			logx.Errorf("[HTTP] %s", logInfo)
+		} else if params.StatusCode >= 400 {
+			logInfo := buildClientErrorLogInfo(params)
+			logx.Warnf("[HTTP] %s", logInfo)
+		} else {
+			logInfo := buildBasicLogInfo(params)
+			logx.Infof("[HTTP] %s", logInfo)
+		}
+		return ""
+	})
+}
+
+func buildFullLogInfo(param gin.LogFormatterParams) string {
+	return fmt.Sprintf("timestamp=%s client_ip=%s status=%d latency=%s method=%s path=%s proto=%s body_size=%d user_agent=%s error=%s",
+		param.TimeStamp.Format(time.RFC3339),
+		param.ClientIP,
+		param.StatusCode,
+		param.Latency,
+		param.Method,
+		param.Path,
+		param.Request.Proto,
+		param.BodySize,
+		param.Request.UserAgent(),
+		param.ErrorMessage,
+	)
+}
+
+func buildClientErrorLogInfo(param gin.LogFormatterParams) string {
+	return fmt.Sprintf("status=%d method=%s path=%s latency=%s client_ip=%s error=%s",
+		param.StatusCode,
+		param.Method,
+		param.Path,
+		param.Latency,
+		param.ClientIP,
+		param.ErrorMessage,
+	)
+}
+
+func buildBasicLogInfo(param gin.LogFormatterParams) string {
+	return fmt.Sprintf("status=%d method=%s path=%s latency=%s",
+		param.StatusCode,
+		param.Method,
+		param.Path,
+		param.Latency,
+	)
 }

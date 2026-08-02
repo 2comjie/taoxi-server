@@ -33,6 +33,7 @@ func (PaymentOrder) Fields() []ent.Field {
 			Comment("第三方商品ID"),
 
 		field.Int32("payment_type").
+			GoType(paymentTypes.PaymentType(0)).
 			Immutable().
 			Comment("支付渠道"),
 

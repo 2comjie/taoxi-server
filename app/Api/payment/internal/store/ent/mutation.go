@@ -39,8 +39,8 @@ type PaymentOrderMutation struct {
 	product_id             *int32
 	addproduct_id          *int32
 	third_party_product_id *string
-	payment_type           *int32
-	addpayment_type        *int32
+	payment_type           *paymentTypes.PaymentType
+	addpayment_type        *paymentTypes.PaymentType
 	status                 *paymentTypes.OrderStatus
 	addstatus              *paymentTypes.OrderStatus
 	order_amount_unit      *int64
@@ -332,13 +332,13 @@ func (m *PaymentOrderMutation) ResetThirdPartyProductID() {
 }
 
 // SetPaymentType sets the "payment_type" field.
-func (m *PaymentOrderMutation) SetPaymentType(i int32) {
-	m.payment_type = &i
+func (m *PaymentOrderMutation) SetPaymentType(ptt paymentTypes.PaymentType) {
+	m.payment_type = &ptt
 	m.addpayment_type = nil
 }
 
 // PaymentType returns the value of the "payment_type" field in the mutation.
-func (m *PaymentOrderMutation) PaymentType() (r int32, exists bool) {
+func (m *PaymentOrderMutation) PaymentType() (r paymentTypes.PaymentType, exists bool) {
 	v := m.payment_type
 	if v == nil {
 		return
@@ -349,7 +349,7 @@ func (m *PaymentOrderMutation) PaymentType() (r int32, exists bool) {
 // OldPaymentType returns the old "payment_type" field's value of the PaymentOrder entity.
 // If the PaymentOrder object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PaymentOrderMutation) OldPaymentType(ctx context.Context) (v int32, err error) {
+func (m *PaymentOrderMutation) OldPaymentType(ctx context.Context) (v paymentTypes.PaymentType, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPaymentType is only allowed on UpdateOne operations")
 	}
@@ -363,17 +363,17 @@ func (m *PaymentOrderMutation) OldPaymentType(ctx context.Context) (v int32, err
 	return oldValue.PaymentType, nil
 }
 
-// AddPaymentType adds i to the "payment_type" field.
-func (m *PaymentOrderMutation) AddPaymentType(i int32) {
+// AddPaymentType adds ptt to the "payment_type" field.
+func (m *PaymentOrderMutation) AddPaymentType(ptt paymentTypes.PaymentType) {
 	if m.addpayment_type != nil {
-		*m.addpayment_type += i
+		*m.addpayment_type += ptt
 	} else {
-		m.addpayment_type = &i
+		m.addpayment_type = &ptt
 	}
 }
 
 // AddedPaymentType returns the value that was added to the "payment_type" field in this mutation.
-func (m *PaymentOrderMutation) AddedPaymentType() (r int32, exists bool) {
+func (m *PaymentOrderMutation) AddedPaymentType() (r paymentTypes.PaymentType, exists bool) {
 	v := m.addpayment_type
 	if v == nil {
 		return
@@ -1646,7 +1646,7 @@ func (m *PaymentOrderMutation) SetField(name string, value ent.Value) error {
 		m.SetThirdPartyProductID(v)
 		return nil
 	case paymentorder.FieldPaymentType:
-		v, ok := value.(int32)
+		v, ok := value.(paymentTypes.PaymentType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1902,7 +1902,7 @@ func (m *PaymentOrderMutation) AddField(name string, value ent.Value) error {
 		m.AddProductID(v)
 		return nil
 	case paymentorder.FieldPaymentType:
-		v, ok := value.(int32)
+		v, ok := value.(paymentTypes.PaymentType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

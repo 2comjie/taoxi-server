@@ -26,7 +26,7 @@ type PaymentOrder struct {
 	// 第三方商品ID
 	ThirdPartyProductID string `json:"third_party_product_id,omitempty"`
 	// 支付渠道
-	PaymentType int32 `json:"payment_type,omitempty"`
+	PaymentType paymentTypes.PaymentType `json:"payment_type,omitempty"`
 	// 内部订单状态
 	Status paymentTypes.OrderStatus `json:"status,omitempty"`
 	// 下单金额整数部分
@@ -126,7 +126,7 @@ func (_m *PaymentOrder) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field payment_type", values[i])
 			} else if value.Valid {
-				_m.PaymentType = int32(value.Int64)
+				_m.PaymentType = paymentTypes.PaymentType(value.Int64)
 			}
 		case paymentorder.FieldStatus:
 			if value, ok := values[i].(*sql.NullInt64); !ok {

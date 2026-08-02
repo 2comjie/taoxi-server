@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/2comjie/taoxi-server/pkg/jwt"
 	midef "github.com/2comjie/taoxi-server/pkg/middleware/def"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
 	"github.com/2comjie/taoxi-server/pkg/xhttp"
@@ -33,10 +35,20 @@ func stdHandler[Req any, Rsp any](handler StdFunc[Req, Rsp], checkUID bool) gin.
 			c.Abort()
 			return
 		}
-		if checkUID && header.UID == "" {
-			xhttp.Fail(c, http.StatusUnauthorized, "未提供有效的访问令牌", nil)
-			c.Abort()
-			return
+		if checkUID {
+			uidValue, err := jwt.AuthAccessToken([]byte(header.Token))
+			if err != nil {
+				xhttp.Fail(c, http.StatusUnauthorized, "访问令牌无效或已过期", nil)
+				c.Abort()
+				return
+			}
+			uid, err := strconv.ParseUint(uidValue, 10, 64)
+			if err != nil || uid == 0 {
+				xhttp.Fail(c, http.StatusUnauthorized, "访问令牌中的UID无效", nil)
+				c.Abort()
+				return
+			}
+			header.UID = uid
 		}
 		var req Req
 		err := c.ShouldBind(&req)

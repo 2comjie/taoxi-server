@@ -86,9 +86,13 @@ func Init(options ...deploy.Option) {
 		if err != nil {
 			panic(fmt.Errorf("gateDeploy: 读取%s失败: %w", jwt.PublicKeyEnv, err))
 		}
+		err = jwt.InitPublicKey(publicKey)
+		if err != nil {
+			panic(fmt.Errorf("gateDeploy: 初始化JWT验签公钥失败: %w", err))
+		}
 		options = append(options, deploy.WithNetworkOptions(
 			network.WithAuther(network.AuthFunc(func(token []byte) (uid string, err error) {
-				uid, err = jwt.Auth(publicKey, token)
+				uid, err = jwt.Auth(token)
 				if err != nil {
 					return "", err
 				}

@@ -1,6 +1,7 @@
 package login
 
 import (
+	"crypto/ed25519"
 	"fmt"
 
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/router"
@@ -18,7 +19,11 @@ func Init(args modules.Modules) {
 		panic(fmt.Errorf("login: 读取%s失败: %w", jwt.PrivateKeyEnv, err))
 	}
 	store := loginStore.New(external.MysqlUser())
-	loginManager := loginService.NewManager(privateKey)
+	publicKey := privateKey.Public().(ed25519.PublicKey)
+	if err = jwt.InitPublicKey(publicKey); err != nil {
+		panic(fmt.Errorf("login: 初始化JWT验签公钥失败: %w", err))
+	}
+	loginManager := loginService.NewManager(store, privateKey)
 	loginManager.Register(loginService.NewGuestLoginProvider(store))
 	router.Init(args, loginManager)
 }

@@ -26,3 +26,13 @@ type LoginRsp struct {
 	GateToken   string `json:"gate_token"`
 	AccessToken string `json:"access_token"`
 }
+
+type BindRsp struct {
+	OpenId string `json:"openid"`
+}
+
+type UnbindRsp struct{}
+
+type DeleteAccountReq struct{}
+
+type DeleteAccountRsp struct{}

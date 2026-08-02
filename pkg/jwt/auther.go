@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	jwtlib "github.com/golang-jwt/jwt/v5"
@@ -27,7 +28,11 @@ const (
 	maxClaimValueSize = 128
 )
 
-var ErrInvalidToken = errors.New("jwt: token无效或已过期")
+var (
+	ErrInvalidToken            = errors.New("jwt: token无效或已过期")
+	ErrPublicKeyNotInitialized = errors.New("jwt: 验签公钥未初始化")
+	publicKeyValue             atomic.Value
+)
 
 type Claims struct {
 	jwtlib.RegisteredClaims
@@ -48,16 +53,36 @@ func Generate(privateKey ed25519.PrivateKey, uid string) ([]byte, error) {
 	return generate(privateKey, uid, gateProfile)
 }
 
-func Auth(publicKey ed25519.PublicKey, token []byte) (string, error) {
-	return verify(publicKey, token, gateProfile)
+func Auth(token []byte) (string, error) {
+	return auth(token, gateProfile)
 }
 
 func GenerateAccessToken(privateKey ed25519.PrivateKey, uid string) ([]byte, error) {
 	return generate(privateKey, uid, accessProfile)
 }
 
-func AuthAccessToken(publicKey ed25519.PublicKey, token []byte) (string, error) {
-	return verify(publicKey, token, accessProfile)
+func AuthAccessToken(token []byte) (string, error) {
+	return auth(token, accessProfile)
+}
+
+func InitPublicKey(publicKey ed25519.PublicKey) error {
+	if len(publicKey) != ed25519.PublicKeySize {
+		return errors.New("jwt: Ed25519公钥无效")
+	}
+	publicKeyValue.Store(append(ed25519.PublicKey(nil), publicKey...))
+	return nil
+}
+
+func auth(token []byte, tokenProfile profile) (string, error) {
+	value := publicKeyValue.Load()
+	if value == nil {
+		return "", ErrPublicKeyNotInitialized
+	}
+	publicKey, ok := value.(ed25519.PublicKey)
+	if !ok {
+		return "", ErrPublicKeyNotInitialized
+	}
+	return verify(publicKey, token, tokenProfile)
 }
 
 func generate(privateKey ed25519.PrivateKey, uid string, tokenProfile profile) ([]byte, error) {

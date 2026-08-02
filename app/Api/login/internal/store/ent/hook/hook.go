@@ -9,28 +9,28 @@ import (
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent"
 )
 
-// The PlayerFunc type is an adapter to allow the use of ordinary
-// function as Player mutator.
-type PlayerFunc func(context.Context, *ent.PlayerMutation) (ent.Value, error)
+// The AccountFunc type is an adapter to allow the use of ordinary
+// function as Account mutator.
+type AccountFunc func(context.Context, *ent.AccountMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f PlayerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.PlayerMutation); ok {
+func (f AccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PlayerMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountMutation", m)
 }
 
-// The PlayerIdentityFunc type is an adapter to allow the use of ordinary
-// function as PlayerIdentity mutator.
-type PlayerIdentityFunc func(context.Context, *ent.PlayerIdentityMutation) (ent.Value, error)
+// The IdentityFunc type is an adapter to allow the use of ordinary
+// function as Identity mutator.
+type IdentityFunc func(context.Context, *ent.IdentityMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f PlayerIdentityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.PlayerIdentityMutation); ok {
+func (f IdentityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.IdentityMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PlayerIdentityMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.IdentityMutation", m)
 }
 
 // Condition is a hook condition function.

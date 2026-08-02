@@ -1,4 +1,4 @@
-package store
+package loginStore
 
 import (
 	"context"
@@ -6,125 +6,138 @@ import (
 	"fmt"
 
 	entsql "entgo.io/ent/dialect/sql"
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/playeridentity"
-
 	loginent "github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent"
-	logintypes "github.com/2comjie/taoxi-server/app/Api/login/types"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/identity"
+	loginTypes "github.com/2comjie/taoxi-server/app/Api/login/types"
+	"github.com/2comjie/wali/logx"
 )
 
-const playerStatusActive int8 = 1
-
-var ErrPlayerDisabled = errors.New("login: 玩家账号不可用")
+var ErrAccountDeleted = errors.New("login: 账号已注销")
 
 type Store struct {
 	client *loginent.Client
-	newUID func() string
 }
 
-func New(driver *entsql.Driver, newUID func() string) (*Store, error) {
-	if driver == nil {
-		return nil, errors.New("login: Ent driver不能为空")
-	}
-	if newUID == nil {
-		return nil, errors.New("login: UID生成器不能为空")
-	}
+func New(driver *entsql.Driver) *Store {
 	return &Store{
 		client: loginent.NewClient(loginent.Driver(driver)),
-		newUID: newUID,
-	}, nil
+	}
 }
 
 func (s *Store) Migrate(ctx context.Context) error {
-	if err := s.client.Schema.Create(ctx); err != nil {
+	err := s.client.Schema.Create(ctx)
+	if err != nil {
 		return fmt.Errorf("login: 创建账号表失败: %w", err)
 	}
 	return nil
 }
 
-func (s *Store) FindOrCreatePlayer(ctx context.Context, loginType logintypes.LoginType, identity logintypes.Identity) (string, bool, error) {
-	uid, found, err := s.findIdentity(ctx, loginType, identity.AppID, identity.OpenID)
+func (s *Store) FindOrCrateAccount(ctx context.Context, loginType loginTypes.LoginType, loginIdentity loginTypes.Identity) (uint64, bool, error) {
+	logCtx := logx.WithField("action", "查找或者创建账号").WithField("loginType", loginType).WithField("openId", loginIdentity.OpenID)
+	logCtx.Infof("查询第三方登录记录")
+	uid, found, err := s.findIdentity(ctx, loginType, loginIdentity.AppID, loginIdentity.OpenID)
 	if err != nil {
-		return "", false, err
+		logCtx.Errorf("查询登陆记录失败: %v", err)
+		return 0, false, err
 	}
+	logCtx.Infof("登陆记录: %v %v", uid, found)
 	if found {
-		if err := s.checkPlayer(ctx, uid); err != nil {
-			return "", false, err
+		logCtx.Infof("有登陆记录 查找内部账号")
+		if err = s.checkAccount(ctx, uid); err != nil {
+			logCtx.Errorf("查询内部账号失败: %v", err)
+			return 0, false, err
 		}
+		logCtx.Infof("已经注册")
 		return uid, false, nil
 	}
 
-	uid = s.newUID()
-	if uid == "" || len(uid) > 32 {
-		return "", false, errors.New("login: UID生成失败")
+	logCtx.Infof("没有登陆记录 创建内部账号和登陆记录")
+	uid, err = s.createAccount(ctx, loginType, loginIdentity)
+	if err == nil {
+		logCtx.Infof("创建内部账号成功 uid %d", uid)
+		return uid, true, nil
 	}
+	if !loginent.IsConstraintError(err) {
+		logCtx.Errorf("创建内部账号失败: %v", err)
+		return 0, false, err
+	}
+
+	// 多个API节点可能同时为同一个第三方身份注册 唯一索引冲突的一方
+	// 回滚自己创建的账号，再读取成功一方已经提交的UID
+	uid, found, findErr := s.findIdentity(ctx, loginType, loginIdentity.AppID, loginIdentity.OpenID)
+	if findErr != nil {
+		return 0, false, findErr
+	}
+	if !found {
+		return 0, false, err
+	}
+	if checkErr := s.checkAccount(ctx, uid); checkErr != nil {
+		return 0, false, checkErr
+	}
+	logCtx.Infof("并发注册命中已有账号 uid %d", uid)
+	return uid, false, nil
+}
+
+func (s *Store) findIdentity(ctx context.Context, loginType loginTypes.LoginType, appID, openID string) (uint64, bool, error) {
+	only, err := s.client.Identity.Query().Where(
+		identity.LoginTypeEQ(int32(loginType)),
+		identity.AppIDEQ(appID),
+		identity.OpenIDEQ(openID),
+	).Only(ctx)
+	if loginent.IsNotFound(err) {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, false, fmt.Errorf("login: 查询登录身份失败: %w", err)
+	}
+	return only.UID, true, nil
+}
+
+func (s *Store) checkAccount(ctx context.Context, uid uint64) error {
+	accountData, err := s.client.Account.Get(ctx, uid)
+	if err != nil {
+		if loginent.IsNotFound(err) {
+			return fmt.Errorf("login: 登录身份对应的账号不存在 uid=%d", uid)
+		}
+		return fmt.Errorf("login: 查询账号失败: %w", err)
+	}
+	if accountData.IsDeleted {
+		return ErrAccountDeleted
+	}
+	return nil
+}
+
+func (s *Store) createAccount(ctx context.Context, loginType loginTypes.LoginType, loginIdentity loginTypes.Identity) (uint64, error) {
 	tx, err := s.client.Tx(ctx)
 	if err != nil {
-		return "", false, fmt.Errorf("login: 开启账号事务失败: %w", err)
+		return 0, fmt.Errorf("login: 开启创建账号事务失败: %w", err)
 	}
 	rollback := func() {
 		_ = tx.Rollback()
 	}
 
-	if _, err = tx.Player.Create().SetID(uid).SetStatus(playerStatusActive).Save(ctx); err != nil {
+	accountData, err := tx.Account.Create().Save(ctx)
+	if err != nil {
 		rollback()
-		return "", false, fmt.Errorf("login: 创建玩家失败: %w", err)
+		return 0, fmt.Errorf("login: 创建账号失败: %w", err)
 	}
-	createIdentity := tx.PlayerIdentity.Create().
-		SetUID(uid).
+
+	createIdentity := tx.Identity.Create().
+		SetUID(accountData.ID).
 		SetLoginType(int32(loginType)).
-		SetAppID(identity.AppID).
-		SetOpenID(identity.OpenID)
-	if identity.UnionID != "" {
-		createIdentity.SetUnionID(identity.UnionID)
+		SetAppID(loginIdentity.AppID).
+		SetOpenID(loginIdentity.OpenID)
+	if loginIdentity.UnionID != "" {
+		createIdentity.SetUnionID(loginIdentity.UnionID)
 	}
 	if _, err = createIdentity.Save(ctx); err != nil {
 		rollback()
-		if loginent.IsConstraintError(err) {
-			winnerUID, winnerFound, findErr := s.findIdentity(ctx, loginType, identity.AppID, identity.OpenID)
-			if findErr != nil {
-				return "", false, findErr
-			}
-			if winnerFound {
-				if err := s.checkPlayer(ctx, winnerUID); err != nil {
-					return "", false, err
-				}
-				return winnerUID, false, nil
-			}
-		}
-		return "", false, fmt.Errorf("login: 绑定登录身份失败: %w", err)
+		return 0, fmt.Errorf("login: 创建登陆记录失败: %w", err)
 	}
+
 	if err = tx.Commit(); err != nil {
-		_ = tx.Rollback()
-		return "", false, fmt.Errorf("login: 提交账号事务失败: %w", err)
+		rollback()
+		return 0, fmt.Errorf("login: 提交创建账号事务失败: %w", err)
 	}
-	return uid, true, nil
-}
-
-func (s *Store) findIdentity(ctx context.Context, loginType logintypes.LoginType, appID, openID string) (string, bool, error) {
-	identity, err := s.client.PlayerIdentity.Query().Where(
-		playeridentity.LoginTypeEQ(int32(loginType)),
-		playeridentity.AppIDEQ(appID),
-		playeridentity.OpenIDEQ(openID),
-	).Only(ctx)
-	if loginent.IsNotFound(err) {
-		return "", false, nil
-	}
-	if err != nil {
-		return "", false, fmt.Errorf("login: 查询登录身份失败: %w", err)
-	}
-	return identity.UID, true, nil
-}
-
-func (s *Store) checkPlayer(ctx context.Context, uid string) error {
-	player, err := s.client.Player.Get(ctx, uid)
-	if loginent.IsNotFound(err) {
-		return errors.New("login: 登录身份对应的玩家不存在")
-	}
-	if err != nil {
-		return fmt.Errorf("login: 查询玩家失败: %w", err)
-	}
-	if player.Status != playerStatusActive {
-		return ErrPlayerDisabled
-	}
-	return nil
+	return accountData.ID, nil
 }

@@ -6,8 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// Player is the predicate function for player builders.
-type Player func(*sql.Selector)
+// Account is the predicate function for account builders.
+type Account func(*sql.Selector)
 
-// PlayerIdentity is the predicate function for playeridentity builders.
-type PlayerIdentity func(*sql.Selector)
+// Identity is the predicate function for identity builders.
+type Identity func(*sql.Selector)

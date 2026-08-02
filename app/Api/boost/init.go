@@ -8,8 +8,6 @@ import (
 
 	"github.com/2comjie/taoxi-server/app/Api/login"
 	"github.com/2comjie/taoxi-server/app/Api/payment"
-	"github.com/2comjie/taoxi-server/flags"
-	"github.com/2comjie/taoxi-server/internal/deploy/external"
 	nodeDeploy "github.com/2comjie/taoxi-server/internal/deploy/node"
 	"github.com/2comjie/taoxi-server/pkg/middleware/auth"
 	"github.com/2comjie/taoxi-server/pkg/middleware/extract"
@@ -79,14 +77,12 @@ func Init() {
 		},
 	}
 
+	// web 模块初始化
 	nodeDeploy.Init(deploy.WithComponents(webComponent))
-
-	err := login.Init(args, external.MysqlUser(), nodeDeploy.App().RandString, flags.Env == flags.Local)
-	if err != nil {
-		panic(err)
-	}
+	login.Init(args)
 	payment.Init(args)
-	err = nodeDeploy.App().Run()
+
+	err := nodeDeploy.App().Run()
 	if err != nil {
 		panic(err)
 	}

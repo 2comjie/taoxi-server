@@ -40,7 +40,7 @@ func (_c *PaymentOrderCreate) SetThirdPartyProductID(v string) *PaymentOrderCrea
 }
 
 // SetPaymentType sets the "payment_type" field.
-func (_c *PaymentOrderCreate) SetPaymentType(v int32) *PaymentOrderCreate {
+func (_c *PaymentOrderCreate) SetPaymentType(v paymentTypes.PaymentType) *PaymentOrderCreate {
 	_c.mutation.SetPaymentType(v)
 	return _c
 }

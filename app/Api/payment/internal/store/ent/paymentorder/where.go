@@ -69,8 +69,9 @@ func ThirdPartyProductID(v string) predicate.PaymentOrder {
 }
 
 // PaymentType applies equality check predicate on the "payment_type" field. It's identical to PaymentTypeEQ.
-func PaymentType(v int32) predicate.PaymentOrder {
-	return predicate.PaymentOrder(sql.FieldEQ(FieldPaymentType, v))
+func PaymentType(v paymentTypes.PaymentType) predicate.PaymentOrder {
+	vc := int32(v)
+	return predicate.PaymentOrder(sql.FieldEQ(FieldPaymentType, vc))
 }
 
 // Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
@@ -315,43 +316,57 @@ func ThirdPartyProductIDContainsFold(v string) predicate.PaymentOrder {
 }
 
 // PaymentTypeEQ applies the EQ predicate on the "payment_type" field.
-func PaymentTypeEQ(v int32) predicate.PaymentOrder {
-	return predicate.PaymentOrder(sql.FieldEQ(FieldPaymentType, v))
+func PaymentTypeEQ(v paymentTypes.PaymentType) predicate.PaymentOrder {
+	vc := int32(v)
+	return predicate.PaymentOrder(sql.FieldEQ(FieldPaymentType, vc))
 }
 
 // PaymentTypeNEQ applies the NEQ predicate on the "payment_type" field.
-func PaymentTypeNEQ(v int32) predicate.PaymentOrder {
-	return predicate.PaymentOrder(sql.FieldNEQ(FieldPaymentType, v))
+func PaymentTypeNEQ(v paymentTypes.PaymentType) predicate.PaymentOrder {
+	vc := int32(v)
+	return predicate.PaymentOrder(sql.FieldNEQ(FieldPaymentType, vc))
 }
 
 // PaymentTypeIn applies the In predicate on the "payment_type" field.
-func PaymentTypeIn(vs ...int32) predicate.PaymentOrder {
-	return predicate.PaymentOrder(sql.FieldIn(FieldPaymentType, vs...))
+func PaymentTypeIn(vs ...paymentTypes.PaymentType) predicate.PaymentOrder {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = int32(vs[i])
+	}
+	return predicate.PaymentOrder(sql.FieldIn(FieldPaymentType, v...))
 }
 
 // PaymentTypeNotIn applies the NotIn predicate on the "payment_type" field.
-func PaymentTypeNotIn(vs ...int32) predicate.PaymentOrder {
-	return predicate.PaymentOrder(sql.FieldNotIn(FieldPaymentType, vs...))
+func PaymentTypeNotIn(vs ...paymentTypes.PaymentType) predicate.PaymentOrder {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = int32(vs[i])
+	}
+	return predicate.PaymentOrder(sql.FieldNotIn(FieldPaymentType, v...))
 }
 
 // PaymentTypeGT applies the GT predicate on the "payment_type" field.
-func PaymentTypeGT(v int32) predicate.PaymentOrder {
-	return predicate.PaymentOrder(sql.FieldGT(FieldPaymentType, v))
+func PaymentTypeGT(v paymentTypes.PaymentType) predicate.PaymentOrder {
+	vc := int32(v)
+	return predicate.PaymentOrder(sql.FieldGT(FieldPaymentType, vc))
 }
 
 // PaymentTypeGTE applies the GTE predicate on the "payment_type" field.
-func PaymentTypeGTE(v int32) predicate.PaymentOrder {
-	return predicate.PaymentOrder(sql.FieldGTE(FieldPaymentType, v))
+func PaymentTypeGTE(v paymentTypes.PaymentType) predicate.PaymentOrder {
+	vc := int32(v)
+	return predicate.PaymentOrder(sql.FieldGTE(FieldPaymentType, vc))
 }
 
 // PaymentTypeLT applies the LT predicate on the "payment_type" field.
-func PaymentTypeLT(v int32) predicate.PaymentOrder {
-	return predicate.PaymentOrder(sql.FieldLT(FieldPaymentType, v))
+func PaymentTypeLT(v paymentTypes.PaymentType) predicate.PaymentOrder {
+	vc := int32(v)
+	return predicate.PaymentOrder(sql.FieldLT(FieldPaymentType, vc))
 }
 
 // PaymentTypeLTE applies the LTE predicate on the "payment_type" field.
-func PaymentTypeLTE(v int32) predicate.PaymentOrder {
-	return predicate.PaymentOrder(sql.FieldLTE(FieldPaymentType, v))
+func PaymentTypeLTE(v paymentTypes.PaymentType) predicate.PaymentOrder {
+	vc := int32(v)
+	return predicate.PaymentOrder(sql.FieldLTE(FieldPaymentType, vc))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.

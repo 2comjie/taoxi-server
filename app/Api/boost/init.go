@@ -8,6 +8,7 @@ import (
 
 	"github.com/2comjie/taoxi-server/app/Api/login"
 	"github.com/2comjie/taoxi-server/app/Api/payment"
+	paymentConfig "github.com/2comjie/taoxi-server/internal/config/payment"
 	nodeDeploy "github.com/2comjie/taoxi-server/internal/deploy/node"
 	"github.com/2comjie/taoxi-server/pkg/middleware/auth"
 	"github.com/2comjie/taoxi-server/pkg/middleware/extract"
@@ -47,11 +48,11 @@ func Init() {
 		Cron:        systemCron,
 	}
 
+	// web 模块初始化
 	webServer := &http.Server{
 		Addr:    ":8080",
 		Handler: eg,
 	}
-
 	webComponent := &app.CommonComponent{
 		MName: "gin-server",
 		MStart: func() error {
@@ -76,13 +77,18 @@ func Init() {
 			return nil
 		},
 	}
-
-	// web 模块初始化
 	nodeDeploy.Init(deploy.WithComponents(webComponent))
+
+	// 初始化配置
+	err := paymentConfig.Init(nodeDeploy.App().Config())
+	if err != nil {
+		panic(err)
+	}
+
 	login.Init(args)
 	payment.Init(args)
 
-	err := nodeDeploy.App().Run()
+	err = nodeDeploy.App().Run()
 	if err != nil {
 		panic(err)
 	}

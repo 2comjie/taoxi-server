@@ -3,58 +3,66 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
 
 var (
-	// PlayersColumns holds the columns for the "players" table.
-	PlayersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString, Size: 32},
-		{Name: "status", Type: field.TypeInt8, Default: 1},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
+	// AccountColumns holds the columns for the "account" table.
+	AccountColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "is_deleted", Type: field.TypeBool, Default: false},
+		{Name: "create_at_unix", Type: field.TypeInt64},
+		{Name: "update_at_unix", Type: field.TypeInt64},
 	}
-	// PlayersTable holds the schema information for the "players" table.
-	PlayersTable = &schema.Table{
-		Name:       "players",
-		Columns:    PlayersColumns,
-		PrimaryKey: []*schema.Column{PlayersColumns[0]},
+	// AccountTable holds the schema information for the "account" table.
+	AccountTable = &schema.Table{
+		Name:       "account",
+		Columns:    AccountColumns,
+		PrimaryKey: []*schema.Column{AccountColumns[0]},
 	}
-	// PlayerIdentitiesColumns holds the columns for the "player_identities" table.
-	PlayerIdentitiesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "uid", Type: field.TypeString, Size: 32},
+	// IdentityColumns holds the columns for the "identity" table.
+	IdentityColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64, Increment: true},
+		{Name: "uid", Type: field.TypeUint64},
 		{Name: "login_type", Type: field.TypeInt32},
 		{Name: "app_id", Type: field.TypeString, Size: 255},
 		{Name: "open_id", Type: field.TypeString, Size: 255},
 		{Name: "union_id", Type: field.TypeString, Nullable: true, Size: 255},
-		{Name: "created_at", Type: field.TypeTime},
+		{Name: "create_at_unix", Type: field.TypeInt64},
 	}
-	// PlayerIdentitiesTable holds the schema information for the "player_identities" table.
-	PlayerIdentitiesTable = &schema.Table{
-		Name:       "player_identities",
-		Columns:    PlayerIdentitiesColumns,
-		PrimaryKey: []*schema.Column{PlayerIdentitiesColumns[0]},
+	// IdentityTable holds the schema information for the "identity" table.
+	IdentityTable = &schema.Table{
+		Name:       "identity",
+		Columns:    IdentityColumns,
+		PrimaryKey: []*schema.Column{IdentityColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "playeridentity_login_type_app_id_open_id",
+				Name:    "identity_login_type_app_id_open_id",
 				Unique:  true,
-				Columns: []*schema.Column{PlayerIdentitiesColumns[2], PlayerIdentitiesColumns[3], PlayerIdentitiesColumns[4]},
+				Columns: []*schema.Column{IdentityColumns[2], IdentityColumns[3], IdentityColumns[4]},
 			},
 			{
-				Name:    "playeridentity_uid_login_type_app_id",
+				Name:    "identity_uid_login_type_app_id",
 				Unique:  true,
-				Columns: []*schema.Column{PlayerIdentitiesColumns[1], PlayerIdentitiesColumns[2], PlayerIdentitiesColumns[3]},
+				Columns: []*schema.Column{IdentityColumns[1], IdentityColumns[2], IdentityColumns[3]},
 			},
 		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		PlayersTable,
-		PlayerIdentitiesTable,
+		AccountTable,
+		IdentityTable,
 	}
 )
 
 func init() {
+	AccountTable.Annotation = &entsql.Annotation{
+		Table:          "account",
+		IncrementStart: func(i int) *int { return &i }(10000000),
+	}
+	IdentityTable.Annotation = &entsql.Annotation{
+		Table: "identity",
+	}
 }

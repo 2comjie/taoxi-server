@@ -11,68 +11,68 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/player"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/identity"
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/predicate"
 )
 
-// PlayerQuery is the builder for querying Player entities.
-type PlayerQuery struct {
+// IdentityQuery is the builder for querying Identity entities.
+type IdentityQuery struct {
 	config
 	ctx        *QueryContext
-	order      []player.OrderOption
+	order      []identity.OrderOption
 	inters     []Interceptor
-	predicates []predicate.Player
+	predicates []predicate.Identity
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the PlayerQuery builder.
-func (_q *PlayerQuery) Where(ps ...predicate.Player) *PlayerQuery {
+// Where adds a new predicate for the IdentityQuery builder.
+func (_q *IdentityQuery) Where(ps ...predicate.Identity) *IdentityQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *PlayerQuery) Limit(limit int) *PlayerQuery {
+func (_q *IdentityQuery) Limit(limit int) *IdentityQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *PlayerQuery) Offset(offset int) *PlayerQuery {
+func (_q *IdentityQuery) Offset(offset int) *IdentityQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *PlayerQuery) Unique(unique bool) *PlayerQuery {
+func (_q *IdentityQuery) Unique(unique bool) *IdentityQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *PlayerQuery) Order(o ...player.OrderOption) *PlayerQuery {
+func (_q *IdentityQuery) Order(o ...identity.OrderOption) *IdentityQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// First returns the first Player entity from the query.
-// Returns a *NotFoundError when no Player was found.
-func (_q *PlayerQuery) First(ctx context.Context) (*Player, error) {
+// First returns the first Identity entity from the query.
+// Returns a *NotFoundError when no Identity was found.
+func (_q *IdentityQuery) First(ctx context.Context) (*Identity, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{player.Label}
+		return nil, &NotFoundError{identity.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *PlayerQuery) FirstX(ctx context.Context) *Player {
+func (_q *IdentityQuery) FirstX(ctx context.Context) *Identity {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -80,22 +80,22 @@ func (_q *PlayerQuery) FirstX(ctx context.Context) *Player {
 	return node
 }
 
-// FirstID returns the first Player ID from the query.
-// Returns a *NotFoundError when no Player ID was found.
-func (_q *PlayerQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
+// FirstID returns the first Identity ID from the query.
+// Returns a *NotFoundError when no Identity ID was found.
+func (_q *IdentityQuery) FirstID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{player.Label}
+		err = &NotFoundError{identity.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *PlayerQuery) FirstIDX(ctx context.Context) string {
+func (_q *IdentityQuery) FirstIDX(ctx context.Context) uint64 {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -103,10 +103,10 @@ func (_q *PlayerQuery) FirstIDX(ctx context.Context) string {
 	return id
 }
 
-// Only returns a single Player entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Player entity is found.
-// Returns a *NotFoundError when no Player entities are found.
-func (_q *PlayerQuery) Only(ctx context.Context) (*Player, error) {
+// Only returns a single Identity entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Identity entity is found.
+// Returns a *NotFoundError when no Identity entities are found.
+func (_q *IdentityQuery) Only(ctx context.Context) (*Identity, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -115,14 +115,14 @@ func (_q *PlayerQuery) Only(ctx context.Context) (*Player, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{player.Label}
+		return nil, &NotFoundError{identity.Label}
 	default:
-		return nil, &NotSingularError{player.Label}
+		return nil, &NotSingularError{identity.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *PlayerQuery) OnlyX(ctx context.Context) *Player {
+func (_q *IdentityQuery) OnlyX(ctx context.Context) *Identity {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -130,11 +130,11 @@ func (_q *PlayerQuery) OnlyX(ctx context.Context) *Player {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Player ID in the query.
-// Returns a *NotSingularError when more than one Player ID is found.
+// OnlyID is like Only, but returns the only Identity ID in the query.
+// Returns a *NotSingularError when more than one Identity ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *PlayerQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (_q *IdentityQuery) OnlyID(ctx context.Context) (id uint64, err error) {
+	var ids []uint64
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
@@ -142,15 +142,15 @@ func (_q *PlayerQuery) OnlyID(ctx context.Context) (id string, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{player.Label}
+		err = &NotFoundError{identity.Label}
 	default:
-		err = &NotSingularError{player.Label}
+		err = &NotSingularError{identity.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *PlayerQuery) OnlyIDX(ctx context.Context) string {
+func (_q *IdentityQuery) OnlyIDX(ctx context.Context) uint64 {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -158,18 +158,18 @@ func (_q *PlayerQuery) OnlyIDX(ctx context.Context) string {
 	return id
 }
 
-// All executes the query and returns a list of Players.
-func (_q *PlayerQuery) All(ctx context.Context) ([]*Player, error) {
+// All executes the query and returns a list of Identities.
+func (_q *IdentityQuery) All(ctx context.Context) ([]*Identity, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Player, *PlayerQuery]()
-	return withInterceptors[[]*Player](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Identity, *IdentityQuery]()
+	return withInterceptors[[]*Identity](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *PlayerQuery) AllX(ctx context.Context) []*Player {
+func (_q *IdentityQuery) AllX(ctx context.Context) []*Identity {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -177,20 +177,20 @@ func (_q *PlayerQuery) AllX(ctx context.Context) []*Player {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Player IDs.
-func (_q *PlayerQuery) IDs(ctx context.Context) (ids []string, err error) {
+// IDs executes the query and returns a list of Identity IDs.
+func (_q *IdentityQuery) IDs(ctx context.Context) (ids []uint64, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(player.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(identity.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *PlayerQuery) IDsX(ctx context.Context) []string {
+func (_q *IdentityQuery) IDsX(ctx context.Context) []uint64 {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -199,16 +199,16 @@ func (_q *PlayerQuery) IDsX(ctx context.Context) []string {
 }
 
 // Count returns the count of the given query.
-func (_q *PlayerQuery) Count(ctx context.Context) (int, error) {
+func (_q *IdentityQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*PlayerQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*IdentityQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *PlayerQuery) CountX(ctx context.Context) int {
+func (_q *IdentityQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -217,7 +217,7 @@ func (_q *PlayerQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *PlayerQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *IdentityQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -230,7 +230,7 @@ func (_q *PlayerQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *PlayerQuery) ExistX(ctx context.Context) bool {
+func (_q *IdentityQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -238,18 +238,18 @@ func (_q *PlayerQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the PlayerQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the IdentityQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *PlayerQuery) Clone() *PlayerQuery {
+func (_q *IdentityQuery) Clone() *IdentityQuery {
 	if _q == nil {
 		return nil
 	}
-	return &PlayerQuery{
+	return &IdentityQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]player.OrderOption{}, _q.order...),
+		order:      append([]identity.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.Player{}, _q.predicates...),
+		predicates: append([]predicate.Identity{}, _q.predicates...),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -262,19 +262,19 @@ func (_q *PlayerQuery) Clone() *PlayerQuery {
 // Example:
 //
 //	var v []struct {
-//		Status int8 `json:"status,omitempty"`
+//		UID uint64 `json:"uid,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Player.Query().
-//		GroupBy(player.FieldStatus).
+//	client.Identity.Query().
+//		GroupBy(identity.FieldUID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *PlayerQuery) GroupBy(field string, fields ...string) *PlayerGroupBy {
+func (_q *IdentityQuery) GroupBy(field string, fields ...string) *IdentityGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &PlayerGroupBy{build: _q}
+	grbuild := &IdentityGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = player.Label
+	grbuild.label = identity.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -285,26 +285,26 @@ func (_q *PlayerQuery) GroupBy(field string, fields ...string) *PlayerGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Status int8 `json:"status,omitempty"`
+//		UID uint64 `json:"uid,omitempty"`
 //	}
 //
-//	client.Player.Query().
-//		Select(player.FieldStatus).
+//	client.Identity.Query().
+//		Select(identity.FieldUID).
 //		Scan(ctx, &v)
-func (_q *PlayerQuery) Select(fields ...string) *PlayerSelect {
+func (_q *IdentityQuery) Select(fields ...string) *IdentitySelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &PlayerSelect{PlayerQuery: _q}
-	sbuild.label = player.Label
+	sbuild := &IdentitySelect{IdentityQuery: _q}
+	sbuild.label = identity.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a PlayerSelect configured with the given aggregations.
-func (_q *PlayerQuery) Aggregate(fns ...AggregateFunc) *PlayerSelect {
+// Aggregate returns a IdentitySelect configured with the given aggregations.
+func (_q *IdentityQuery) Aggregate(fns ...AggregateFunc) *IdentitySelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *PlayerQuery) prepareQuery(ctx context.Context) error {
+func (_q *IdentityQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -316,7 +316,7 @@ func (_q *PlayerQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !player.ValidColumn(f) {
+		if !identity.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -330,16 +330,16 @@ func (_q *PlayerQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *PlayerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Player, error) {
+func (_q *IdentityQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Identity, error) {
 	var (
-		nodes = []*Player{}
+		nodes = []*Identity{}
 		_spec = _q.querySpec()
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Player).scanValues(nil, columns)
+		return (*Identity).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Player{config: _q.config}
+		node := &Identity{config: _q.config}
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
@@ -355,7 +355,7 @@ func (_q *PlayerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Playe
 	return nodes, nil
 }
 
-func (_q *PlayerQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *IdentityQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -364,8 +364,8 @@ func (_q *PlayerQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *PlayerQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(player.Table, player.Columns, sqlgraph.NewFieldSpec(player.FieldID, field.TypeString))
+func (_q *IdentityQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(identity.Table, identity.Columns, sqlgraph.NewFieldSpec(identity.FieldID, field.TypeUint64))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -374,9 +374,9 @@ func (_q *PlayerQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, player.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, identity.FieldID)
 		for i := range fields {
-			if fields[i] != player.FieldID {
+			if fields[i] != identity.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -404,12 +404,12 @@ func (_q *PlayerQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *PlayerQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *IdentityQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(player.Table)
+	t1 := builder.Table(identity.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = player.Columns
+		columns = identity.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -436,28 +436,28 @@ func (_q *PlayerQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// PlayerGroupBy is the group-by builder for Player entities.
-type PlayerGroupBy struct {
+// IdentityGroupBy is the group-by builder for Identity entities.
+type IdentityGroupBy struct {
 	selector
-	build *PlayerQuery
+	build *IdentityQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *PlayerGroupBy) Aggregate(fns ...AggregateFunc) *PlayerGroupBy {
+func (_g *IdentityGroupBy) Aggregate(fns ...AggregateFunc) *IdentityGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *PlayerGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *IdentityGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*PlayerQuery, *PlayerGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*IdentityQuery, *IdentityGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *PlayerGroupBy) sqlScan(ctx context.Context, root *PlayerQuery, v any) error {
+func (_g *IdentityGroupBy) sqlScan(ctx context.Context, root *IdentityQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -484,28 +484,28 @@ func (_g *PlayerGroupBy) sqlScan(ctx context.Context, root *PlayerQuery, v any) 
 	return sql.ScanSlice(rows, v)
 }
 
-// PlayerSelect is the builder for selecting fields of Player entities.
-type PlayerSelect struct {
-	*PlayerQuery
+// IdentitySelect is the builder for selecting fields of Identity entities.
+type IdentitySelect struct {
+	*IdentityQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *PlayerSelect) Aggregate(fns ...AggregateFunc) *PlayerSelect {
+func (_s *IdentitySelect) Aggregate(fns ...AggregateFunc) *IdentitySelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *PlayerSelect) Scan(ctx context.Context, v any) error {
+func (_s *IdentitySelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*PlayerQuery, *PlayerSelect](ctx, _s.PlayerQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*IdentityQuery, *IdentitySelect](ctx, _s.IdentityQuery, _s, _s.inters, v)
 }
 
-func (_s *PlayerSelect) sqlScan(ctx context.Context, root *PlayerQuery, v any) error {
+func (_s *IdentitySelect) sqlScan(ctx context.Context, root *IdentityQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

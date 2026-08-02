@@ -3,10 +3,8 @@
 package ent
 
 import (
-	"time"
-
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/player"
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/playeridentity"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/account"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/identity"
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/schema"
 )
 
@@ -14,46 +12,38 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
-	playerFields := schema.Player{}.Fields()
-	_ = playerFields
-	// playerDescStatus is the schema descriptor for status field.
-	playerDescStatus := playerFields[1].Descriptor()
-	// player.DefaultStatus holds the default value on creation for the status field.
-	player.DefaultStatus = playerDescStatus.Default.(int8)
-	// playerDescCreatedAt is the schema descriptor for created_at field.
-	playerDescCreatedAt := playerFields[2].Descriptor()
-	// player.DefaultCreatedAt holds the default value on creation for the created_at field.
-	player.DefaultCreatedAt = playerDescCreatedAt.Default.(func() time.Time)
-	// playerDescUpdatedAt is the schema descriptor for updated_at field.
-	playerDescUpdatedAt := playerFields[3].Descriptor()
-	// player.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	player.DefaultUpdatedAt = playerDescUpdatedAt.Default.(func() time.Time)
-	// player.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	player.UpdateDefaultUpdatedAt = playerDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// playerDescID is the schema descriptor for id field.
-	playerDescID := playerFields[0].Descriptor()
-	// player.IDValidator is a validator for the "id" field. It is called by the builders before save.
-	player.IDValidator = playerDescID.Validators[0].(func(string) error)
-	playeridentityFields := schema.PlayerIdentity{}.Fields()
-	_ = playeridentityFields
-	// playeridentityDescUID is the schema descriptor for uid field.
-	playeridentityDescUID := playeridentityFields[0].Descriptor()
-	// playeridentity.UIDValidator is a validator for the "uid" field. It is called by the builders before save.
-	playeridentity.UIDValidator = playeridentityDescUID.Validators[0].(func(string) error)
-	// playeridentityDescAppID is the schema descriptor for app_id field.
-	playeridentityDescAppID := playeridentityFields[2].Descriptor()
-	// playeridentity.AppIDValidator is a validator for the "app_id" field. It is called by the builders before save.
-	playeridentity.AppIDValidator = playeridentityDescAppID.Validators[0].(func(string) error)
-	// playeridentityDescOpenID is the schema descriptor for open_id field.
-	playeridentityDescOpenID := playeridentityFields[3].Descriptor()
-	// playeridentity.OpenIDValidator is a validator for the "open_id" field. It is called by the builders before save.
-	playeridentity.OpenIDValidator = playeridentityDescOpenID.Validators[0].(func(string) error)
-	// playeridentityDescUnionID is the schema descriptor for union_id field.
-	playeridentityDescUnionID := playeridentityFields[4].Descriptor()
-	// playeridentity.UnionIDValidator is a validator for the "union_id" field. It is called by the builders before save.
-	playeridentity.UnionIDValidator = playeridentityDescUnionID.Validators[0].(func(string) error)
-	// playeridentityDescCreatedAt is the schema descriptor for created_at field.
-	playeridentityDescCreatedAt := playeridentityFields[5].Descriptor()
-	// playeridentity.DefaultCreatedAt holds the default value on creation for the created_at field.
-	playeridentity.DefaultCreatedAt = playeridentityDescCreatedAt.Default.(func() time.Time)
+	accountFields := schema.Account{}.Fields()
+	_ = accountFields
+	// accountDescIsDeleted is the schema descriptor for is_deleted field.
+	accountDescIsDeleted := accountFields[1].Descriptor()
+	// account.DefaultIsDeleted holds the default value on creation for the is_deleted field.
+	account.DefaultIsDeleted = accountDescIsDeleted.Default.(bool)
+	// accountDescCreateAtUnix is the schema descriptor for create_at_unix field.
+	accountDescCreateAtUnix := accountFields[2].Descriptor()
+	// account.DefaultCreateAtUnix holds the default value on creation for the create_at_unix field.
+	account.DefaultCreateAtUnix = accountDescCreateAtUnix.Default.(func() int64)
+	// accountDescUpdateAtUnix is the schema descriptor for update_at_unix field.
+	accountDescUpdateAtUnix := accountFields[3].Descriptor()
+	// account.DefaultUpdateAtUnix holds the default value on creation for the update_at_unix field.
+	account.DefaultUpdateAtUnix = accountDescUpdateAtUnix.Default.(func() int64)
+	// account.UpdateDefaultUpdateAtUnix holds the default value on update for the update_at_unix field.
+	account.UpdateDefaultUpdateAtUnix = accountDescUpdateAtUnix.UpdateDefault.(func() int64)
+	identityFields := schema.Identity{}.Fields()
+	_ = identityFields
+	// identityDescAppID is the schema descriptor for app_id field.
+	identityDescAppID := identityFields[3].Descriptor()
+	// identity.AppIDValidator is a validator for the "app_id" field. It is called by the builders before save.
+	identity.AppIDValidator = identityDescAppID.Validators[0].(func(string) error)
+	// identityDescOpenID is the schema descriptor for open_id field.
+	identityDescOpenID := identityFields[4].Descriptor()
+	// identity.OpenIDValidator is a validator for the "open_id" field. It is called by the builders before save.
+	identity.OpenIDValidator = identityDescOpenID.Validators[0].(func(string) error)
+	// identityDescUnionID is the schema descriptor for union_id field.
+	identityDescUnionID := identityFields[5].Descriptor()
+	// identity.UnionIDValidator is a validator for the "union_id" field. It is called by the builders before save.
+	identity.UnionIDValidator = identityDescUnionID.Validators[0].(func(string) error)
+	// identityDescCreateAtUnix is the schema descriptor for create_at_unix field.
+	identityDescCreateAtUnix := identityFields[6].Descriptor()
+	// identity.DefaultCreateAtUnix holds the default value on creation for the create_at_unix field.
+	identity.DefaultCreateAtUnix = identityDescCreateAtUnix.Default.(func() int64)
 }

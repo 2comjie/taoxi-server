@@ -7,12 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/player"
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/playeridentity"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/account"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/identity"
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/predicate"
 )
 
@@ -25,37 +24,38 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypePlayer         = "Player"
-	TypePlayerIdentity = "PlayerIdentity"
+	TypeAccount  = "Account"
+	TypeIdentity = "Identity"
 )
 
-// PlayerMutation represents an operation that mutates the Player nodes in the graph.
-type PlayerMutation struct {
+// AccountMutation represents an operation that mutates the Account nodes in the graph.
+type AccountMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	status        *int8
-	addstatus     *int8
-	created_at    *time.Time
-	updated_at    *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Player, error)
-	predicates    []predicate.Player
+	op                Op
+	typ               string
+	id                *uint64
+	is_deleted        *bool
+	create_at_unix    *int64
+	addcreate_at_unix *int64
+	update_at_unix    *int64
+	addupdate_at_unix *int64
+	clearedFields     map[string]struct{}
+	done              bool
+	oldValue          func(context.Context) (*Account, error)
+	predicates        []predicate.Account
 }
 
-var _ ent.Mutation = (*PlayerMutation)(nil)
+var _ ent.Mutation = (*AccountMutation)(nil)
 
-// playerOption allows management of the mutation configuration using functional options.
-type playerOption func(*PlayerMutation)
+// accountOption allows management of the mutation configuration using functional options.
+type accountOption func(*AccountMutation)
 
-// newPlayerMutation creates new mutation for the Player entity.
-func newPlayerMutation(c config, op Op, opts ...playerOption) *PlayerMutation {
-	m := &PlayerMutation{
+// newAccountMutation creates new mutation for the Account entity.
+func newAccountMutation(c config, op Op, opts ...accountOption) *AccountMutation {
+	m := &AccountMutation{
 		config:        c,
 		op:            op,
-		typ:           TypePlayer,
+		typ:           TypeAccount,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -64,20 +64,20 @@ func newPlayerMutation(c config, op Op, opts ...playerOption) *PlayerMutation {
 	return m
 }
 
-// withPlayerID sets the ID field of the mutation.
-func withPlayerID(id string) playerOption {
-	return func(m *PlayerMutation) {
+// withAccountID sets the ID field of the mutation.
+func withAccountID(id uint64) accountOption {
+	return func(m *AccountMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *Player
+			value *Account
 		)
-		m.oldValue = func(ctx context.Context) (*Player, error) {
+		m.oldValue = func(ctx context.Context) (*Account, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().Player.Get(ctx, id)
+					value, err = m.Client().Account.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -86,10 +86,10 @@ func withPlayerID(id string) playerOption {
 	}
 }
 
-// withPlayer sets the old Player of the mutation.
-func withPlayer(node *Player) playerOption {
-	return func(m *PlayerMutation) {
-		m.oldValue = func(context.Context) (*Player, error) {
+// withAccount sets the old Account of the mutation.
+func withAccount(node *Account) accountOption {
+	return func(m *AccountMutation) {
+		m.oldValue = func(context.Context) (*Account, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -98,7 +98,7 @@ func withPlayer(node *Player) playerOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m PlayerMutation) Client() *Client {
+func (m AccountMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -106,7 +106,7 @@ func (m PlayerMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m PlayerMutation) Tx() (*Tx, error) {
+func (m AccountMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -116,14 +116,14 @@ func (m PlayerMutation) Tx() (*Tx, error) {
 }
 
 // SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Player entities.
-func (m *PlayerMutation) SetID(id string) {
+// operation is only accepted on creation of Account entities.
+func (m *AccountMutation) SetID(id uint64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *PlayerMutation) ID() (id string, exists bool) {
+func (m *AccountMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -134,158 +134,178 @@ func (m *PlayerMutation) ID() (id string, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *PlayerMutation) IDs(ctx context.Context) ([]string, error) {
+func (m *AccountMutation) IDs(ctx context.Context) ([]uint64, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []string{id}, nil
+			return []uint64{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().Player.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().Account.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
-// SetStatus sets the "status" field.
-func (m *PlayerMutation) SetStatus(i int8) {
-	m.status = &i
-	m.addstatus = nil
+// SetIsDeleted sets the "is_deleted" field.
+func (m *AccountMutation) SetIsDeleted(b bool) {
+	m.is_deleted = &b
 }
 
-// Status returns the value of the "status" field in the mutation.
-func (m *PlayerMutation) Status() (r int8, exists bool) {
-	v := m.status
+// IsDeleted returns the value of the "is_deleted" field in the mutation.
+func (m *AccountMutation) IsDeleted() (r bool, exists bool) {
+	v := m.is_deleted
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldStatus returns the old "status" field's value of the Player entity.
-// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// OldIsDeleted returns the old "is_deleted" field's value of the Account entity.
+// If the Account object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerMutation) OldStatus(ctx context.Context) (v int8, err error) {
+func (m *AccountMutation) OldIsDeleted(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+		return v, errors.New("OldIsDeleted is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldStatus requires an ID field in the mutation")
+		return v, errors.New("OldIsDeleted requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+		return v, fmt.Errorf("querying old value for OldIsDeleted: %w", err)
 	}
-	return oldValue.Status, nil
+	return oldValue.IsDeleted, nil
 }
 
-// AddStatus adds i to the "status" field.
-func (m *PlayerMutation) AddStatus(i int8) {
-	if m.addstatus != nil {
-		*m.addstatus += i
+// ResetIsDeleted resets all changes to the "is_deleted" field.
+func (m *AccountMutation) ResetIsDeleted() {
+	m.is_deleted = nil
+}
+
+// SetCreateAtUnix sets the "create_at_unix" field.
+func (m *AccountMutation) SetCreateAtUnix(i int64) {
+	m.create_at_unix = &i
+	m.addcreate_at_unix = nil
+}
+
+// CreateAtUnix returns the value of the "create_at_unix" field in the mutation.
+func (m *AccountMutation) CreateAtUnix() (r int64, exists bool) {
+	v := m.create_at_unix
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreateAtUnix returns the old "create_at_unix" field's value of the Account entity.
+// If the Account object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountMutation) OldCreateAtUnix(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreateAtUnix is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreateAtUnix requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreateAtUnix: %w", err)
+	}
+	return oldValue.CreateAtUnix, nil
+}
+
+// AddCreateAtUnix adds i to the "create_at_unix" field.
+func (m *AccountMutation) AddCreateAtUnix(i int64) {
+	if m.addcreate_at_unix != nil {
+		*m.addcreate_at_unix += i
 	} else {
-		m.addstatus = &i
+		m.addcreate_at_unix = &i
 	}
 }
 
-// AddedStatus returns the value that was added to the "status" field in this mutation.
-func (m *PlayerMutation) AddedStatus() (r int8, exists bool) {
-	v := m.addstatus
+// AddedCreateAtUnix returns the value that was added to the "create_at_unix" field in this mutation.
+func (m *AccountMutation) AddedCreateAtUnix() (r int64, exists bool) {
+	v := m.addcreate_at_unix
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// ResetStatus resets all changes to the "status" field.
-func (m *PlayerMutation) ResetStatus() {
-	m.status = nil
-	m.addstatus = nil
+// ResetCreateAtUnix resets all changes to the "create_at_unix" field.
+func (m *AccountMutation) ResetCreateAtUnix() {
+	m.create_at_unix = nil
+	m.addcreate_at_unix = nil
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (m *PlayerMutation) SetCreatedAt(t time.Time) {
-	m.created_at = &t
+// SetUpdateAtUnix sets the "update_at_unix" field.
+func (m *AccountMutation) SetUpdateAtUnix(i int64) {
+	m.update_at_unix = &i
+	m.addupdate_at_unix = nil
 }
 
-// CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *PlayerMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.created_at
+// UpdateAtUnix returns the value of the "update_at_unix" field in the mutation.
+func (m *AccountMutation) UpdateAtUnix() (r int64, exists bool) {
+	v := m.update_at_unix
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "created_at" field's value of the Player entity.
-// If the Player object wasn't provided to the builder, the object is fetched from the database.
+// OldUpdateAtUnix returns the old "update_at_unix" field's value of the Account entity.
+// If the Account object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+func (m *AccountMutation) OldUpdateAtUnix(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+		return v, errors.New("OldUpdateAtUnix is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+		return v, errors.New("OldUpdateAtUnix requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+		return v, fmt.Errorf("querying old value for OldUpdateAtUnix: %w", err)
 	}
-	return oldValue.CreatedAt, nil
+	return oldValue.UpdateAtUnix, nil
 }
 
-// ResetCreatedAt resets all changes to the "created_at" field.
-func (m *PlayerMutation) ResetCreatedAt() {
-	m.created_at = nil
+// AddUpdateAtUnix adds i to the "update_at_unix" field.
+func (m *AccountMutation) AddUpdateAtUnix(i int64) {
+	if m.addupdate_at_unix != nil {
+		*m.addupdate_at_unix += i
+	} else {
+		m.addupdate_at_unix = &i
+	}
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (m *PlayerMutation) SetUpdatedAt(t time.Time) {
-	m.updated_at = &t
-}
-
-// UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *PlayerMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updated_at
+// AddedUpdateAtUnix returns the value that was added to the "update_at_unix" field in this mutation.
+func (m *AccountMutation) AddedUpdateAtUnix() (r int64, exists bool) {
+	v := m.addupdate_at_unix
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updated_at" field's value of the Player entity.
-// If the Player object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
-	}
-	return oldValue.UpdatedAt, nil
+// ResetUpdateAtUnix resets all changes to the "update_at_unix" field.
+func (m *AccountMutation) ResetUpdateAtUnix() {
+	m.update_at_unix = nil
+	m.addupdate_at_unix = nil
 }
 
-// ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *PlayerMutation) ResetUpdatedAt() {
-	m.updated_at = nil
-}
-
-// Where appends a list predicates to the PlayerMutation builder.
-func (m *PlayerMutation) Where(ps ...predicate.Player) {
+// Where appends a list predicates to the AccountMutation builder.
+func (m *AccountMutation) Where(ps ...predicate.Account) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the PlayerMutation builder. Using this method,
+// WhereP appends storage-level predicates to the AccountMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *PlayerMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.Player, len(ps))
+func (m *AccountMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Account, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -293,33 +313,33 @@ func (m *PlayerMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *PlayerMutation) Op() Op {
+func (m *AccountMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *PlayerMutation) SetOp(op Op) {
+func (m *AccountMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (Player).
-func (m *PlayerMutation) Type() string {
+// Type returns the node type of this mutation (Account).
+func (m *AccountMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *PlayerMutation) Fields() []string {
+func (m *AccountMutation) Fields() []string {
 	fields := make([]string, 0, 3)
-	if m.status != nil {
-		fields = append(fields, player.FieldStatus)
+	if m.is_deleted != nil {
+		fields = append(fields, account.FieldIsDeleted)
 	}
-	if m.created_at != nil {
-		fields = append(fields, player.FieldCreatedAt)
+	if m.create_at_unix != nil {
+		fields = append(fields, account.FieldCreateAtUnix)
 	}
-	if m.updated_at != nil {
-		fields = append(fields, player.FieldUpdatedAt)
+	if m.update_at_unix != nil {
+		fields = append(fields, account.FieldUpdateAtUnix)
 	}
 	return fields
 }
@@ -327,14 +347,14 @@ func (m *PlayerMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *PlayerMutation) Field(name string) (ent.Value, bool) {
+func (m *AccountMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case player.FieldStatus:
-		return m.Status()
-	case player.FieldCreatedAt:
-		return m.CreatedAt()
-	case player.FieldUpdatedAt:
-		return m.UpdatedAt()
+	case account.FieldIsDeleted:
+		return m.IsDeleted()
+	case account.FieldCreateAtUnix:
+		return m.CreateAtUnix()
+	case account.FieldUpdateAtUnix:
+		return m.UpdateAtUnix()
 	}
 	return nil, false
 }
@@ -342,54 +362,57 @@ func (m *PlayerMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *PlayerMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *AccountMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case player.FieldStatus:
-		return m.OldStatus(ctx)
-	case player.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
-	case player.FieldUpdatedAt:
-		return m.OldUpdatedAt(ctx)
+	case account.FieldIsDeleted:
+		return m.OldIsDeleted(ctx)
+	case account.FieldCreateAtUnix:
+		return m.OldCreateAtUnix(ctx)
+	case account.FieldUpdateAtUnix:
+		return m.OldUpdateAtUnix(ctx)
 	}
-	return nil, fmt.Errorf("unknown Player field %s", name)
+	return nil, fmt.Errorf("unknown Account field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *PlayerMutation) SetField(name string, value ent.Value) error {
+func (m *AccountMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case player.FieldStatus:
-		v, ok := value.(int8)
+	case account.FieldIsDeleted:
+		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetStatus(v)
+		m.SetIsDeleted(v)
 		return nil
-	case player.FieldCreatedAt:
-		v, ok := value.(time.Time)
+	case account.FieldCreateAtUnix:
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetCreatedAt(v)
+		m.SetCreateAtUnix(v)
 		return nil
-	case player.FieldUpdatedAt:
-		v, ok := value.(time.Time)
+	case account.FieldUpdateAtUnix:
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetUpdatedAt(v)
+		m.SetUpdateAtUnix(v)
 		return nil
 	}
-	return fmt.Errorf("unknown Player field %s", name)
+	return fmt.Errorf("unknown Account field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *PlayerMutation) AddedFields() []string {
+func (m *AccountMutation) AddedFields() []string {
 	var fields []string
-	if m.addstatus != nil {
-		fields = append(fields, player.FieldStatus)
+	if m.addcreate_at_unix != nil {
+		fields = append(fields, account.FieldCreateAtUnix)
+	}
+	if m.addupdate_at_unix != nil {
+		fields = append(fields, account.FieldUpdateAtUnix)
 	}
 	return fields
 }
@@ -397,10 +420,12 @@ func (m *PlayerMutation) AddedFields() []string {
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *PlayerMutation) AddedField(name string) (ent.Value, bool) {
+func (m *AccountMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case player.FieldStatus:
-		return m.AddedStatus()
+	case account.FieldCreateAtUnix:
+		return m.AddedCreateAtUnix()
+	case account.FieldUpdateAtUnix:
+		return m.AddedUpdateAtUnix()
 	}
 	return nil, false
 }
@@ -408,133 +433,142 @@ func (m *PlayerMutation) AddedField(name string) (ent.Value, bool) {
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *PlayerMutation) AddField(name string, value ent.Value) error {
+func (m *AccountMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case player.FieldStatus:
-		v, ok := value.(int8)
+	case account.FieldCreateAtUnix:
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.AddStatus(v)
+		m.AddCreateAtUnix(v)
+		return nil
+	case account.FieldUpdateAtUnix:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUpdateAtUnix(v)
 		return nil
 	}
-	return fmt.Errorf("unknown Player numeric field %s", name)
+	return fmt.Errorf("unknown Account numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *PlayerMutation) ClearedFields() []string {
+func (m *AccountMutation) ClearedFields() []string {
 	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *PlayerMutation) FieldCleared(name string) bool {
+func (m *AccountMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *PlayerMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown Player nullable field %s", name)
+func (m *AccountMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Account nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *PlayerMutation) ResetField(name string) error {
+func (m *AccountMutation) ResetField(name string) error {
 	switch name {
-	case player.FieldStatus:
-		m.ResetStatus()
+	case account.FieldIsDeleted:
+		m.ResetIsDeleted()
 		return nil
-	case player.FieldCreatedAt:
-		m.ResetCreatedAt()
+	case account.FieldCreateAtUnix:
+		m.ResetCreateAtUnix()
 		return nil
-	case player.FieldUpdatedAt:
-		m.ResetUpdatedAt()
+	case account.FieldUpdateAtUnix:
+		m.ResetUpdateAtUnix()
 		return nil
 	}
-	return fmt.Errorf("unknown Player field %s", name)
+	return fmt.Errorf("unknown Account field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *PlayerMutation) AddedEdges() []string {
+func (m *AccountMutation) AddedEdges() []string {
 	edges := make([]string, 0, 0)
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *PlayerMutation) AddedIDs(name string) []ent.Value {
+func (m *AccountMutation) AddedIDs(name string) []ent.Value {
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *PlayerMutation) RemovedEdges() []string {
+func (m *AccountMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 0)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *PlayerMutation) RemovedIDs(name string) []ent.Value {
+func (m *AccountMutation) RemovedIDs(name string) []ent.Value {
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *PlayerMutation) ClearedEdges() []string {
+func (m *AccountMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 0)
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *PlayerMutation) EdgeCleared(name string) bool {
+func (m *AccountMutation) EdgeCleared(name string) bool {
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *PlayerMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown Player unique edge %s", name)
+func (m *AccountMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Account unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *PlayerMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown Player edge %s", name)
+func (m *AccountMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Account edge %s", name)
 }
 
-// PlayerIdentityMutation represents an operation that mutates the PlayerIdentity nodes in the graph.
-type PlayerIdentityMutation struct {
+// IdentityMutation represents an operation that mutates the Identity nodes in the graph.
+type IdentityMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	uid           *string
-	login_type    *int32
-	addlogin_type *int32
-	app_id        *string
-	open_id       *string
-	union_id      *string
-	created_at    *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*PlayerIdentity, error)
-	predicates    []predicate.PlayerIdentity
+	op                Op
+	typ               string
+	id                *uint64
+	uid               *uint64
+	adduid            *int64
+	login_type        *int32
+	addlogin_type     *int32
+	app_id            *string
+	open_id           *string
+	union_id          *string
+	create_at_unix    *int64
+	addcreate_at_unix *int64
+	clearedFields     map[string]struct{}
+	done              bool
+	oldValue          func(context.Context) (*Identity, error)
+	predicates        []predicate.Identity
 }
 
-var _ ent.Mutation = (*PlayerIdentityMutation)(nil)
+var _ ent.Mutation = (*IdentityMutation)(nil)
 
-// playeridentityOption allows management of the mutation configuration using functional options.
-type playeridentityOption func(*PlayerIdentityMutation)
+// identityOption allows management of the mutation configuration using functional options.
+type identityOption func(*IdentityMutation)
 
-// newPlayerIdentityMutation creates new mutation for the PlayerIdentity entity.
-func newPlayerIdentityMutation(c config, op Op, opts ...playeridentityOption) *PlayerIdentityMutation {
-	m := &PlayerIdentityMutation{
+// newIdentityMutation creates new mutation for the Identity entity.
+func newIdentityMutation(c config, op Op, opts ...identityOption) *IdentityMutation {
+	m := &IdentityMutation{
 		config:        c,
 		op:            op,
-		typ:           TypePlayerIdentity,
+		typ:           TypeIdentity,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -543,20 +577,20 @@ func newPlayerIdentityMutation(c config, op Op, opts ...playeridentityOption) *P
 	return m
 }
 
-// withPlayerIdentityID sets the ID field of the mutation.
-func withPlayerIdentityID(id int) playeridentityOption {
-	return func(m *PlayerIdentityMutation) {
+// withIdentityID sets the ID field of the mutation.
+func withIdentityID(id uint64) identityOption {
+	return func(m *IdentityMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *PlayerIdentity
+			value *Identity
 		)
-		m.oldValue = func(ctx context.Context) (*PlayerIdentity, error) {
+		m.oldValue = func(ctx context.Context) (*Identity, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().PlayerIdentity.Get(ctx, id)
+					value, err = m.Client().Identity.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -565,10 +599,10 @@ func withPlayerIdentityID(id int) playeridentityOption {
 	}
 }
 
-// withPlayerIdentity sets the old PlayerIdentity of the mutation.
-func withPlayerIdentity(node *PlayerIdentity) playeridentityOption {
-	return func(m *PlayerIdentityMutation) {
-		m.oldValue = func(context.Context) (*PlayerIdentity, error) {
+// withIdentity sets the old Identity of the mutation.
+func withIdentity(node *Identity) identityOption {
+	return func(m *IdentityMutation) {
+		m.oldValue = func(context.Context) (*Identity, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -577,7 +611,7 @@ func withPlayerIdentity(node *PlayerIdentity) playeridentityOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m PlayerIdentityMutation) Client() *Client {
+func (m IdentityMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -585,7 +619,7 @@ func (m PlayerIdentityMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m PlayerIdentityMutation) Tx() (*Tx, error) {
+func (m IdentityMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -594,9 +628,15 @@ func (m PlayerIdentityMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Identity entities.
+func (m *IdentityMutation) SetID(id uint64) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *PlayerIdentityMutation) ID() (id int, exists bool) {
+func (m *IdentityMutation) ID() (id uint64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -607,28 +647,29 @@ func (m *PlayerIdentityMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *PlayerIdentityMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *IdentityMutation) IDs(ctx context.Context) ([]uint64, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uint64{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().PlayerIdentity.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().Identity.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
 // SetUID sets the "uid" field.
-func (m *PlayerIdentityMutation) SetUID(s string) {
-	m.uid = &s
+func (m *IdentityMutation) SetUID(u uint64) {
+	m.uid = &u
+	m.adduid = nil
 }
 
 // UID returns the value of the "uid" field in the mutation.
-func (m *PlayerIdentityMutation) UID() (r string, exists bool) {
+func (m *IdentityMutation) UID() (r uint64, exists bool) {
 	v := m.uid
 	if v == nil {
 		return
@@ -636,10 +677,10 @@ func (m *PlayerIdentityMutation) UID() (r string, exists bool) {
 	return *v, true
 }
 
-// OldUID returns the old "uid" field's value of the PlayerIdentity entity.
-// If the PlayerIdentity object wasn't provided to the builder, the object is fetched from the database.
+// OldUID returns the old "uid" field's value of the Identity entity.
+// If the Identity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerIdentityMutation) OldUID(ctx context.Context) (v string, err error) {
+func (m *IdentityMutation) OldUID(ctx context.Context) (v uint64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUID is only allowed on UpdateOne operations")
 	}
@@ -653,19 +694,38 @@ func (m *PlayerIdentityMutation) OldUID(ctx context.Context) (v string, err erro
 	return oldValue.UID, nil
 }
 
+// AddUID adds u to the "uid" field.
+func (m *IdentityMutation) AddUID(u int64) {
+	if m.adduid != nil {
+		*m.adduid += u
+	} else {
+		m.adduid = &u
+	}
+}
+
+// AddedUID returns the value that was added to the "uid" field in this mutation.
+func (m *IdentityMutation) AddedUID() (r int64, exists bool) {
+	v := m.adduid
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
 // ResetUID resets all changes to the "uid" field.
-func (m *PlayerIdentityMutation) ResetUID() {
+func (m *IdentityMutation) ResetUID() {
 	m.uid = nil
+	m.adduid = nil
 }
 
 // SetLoginType sets the "login_type" field.
-func (m *PlayerIdentityMutation) SetLoginType(i int32) {
+func (m *IdentityMutation) SetLoginType(i int32) {
 	m.login_type = &i
 	m.addlogin_type = nil
 }
 
 // LoginType returns the value of the "login_type" field in the mutation.
-func (m *PlayerIdentityMutation) LoginType() (r int32, exists bool) {
+func (m *IdentityMutation) LoginType() (r int32, exists bool) {
 	v := m.login_type
 	if v == nil {
 		return
@@ -673,10 +733,10 @@ func (m *PlayerIdentityMutation) LoginType() (r int32, exists bool) {
 	return *v, true
 }
 
-// OldLoginType returns the old "login_type" field's value of the PlayerIdentity entity.
-// If the PlayerIdentity object wasn't provided to the builder, the object is fetched from the database.
+// OldLoginType returns the old "login_type" field's value of the Identity entity.
+// If the Identity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerIdentityMutation) OldLoginType(ctx context.Context) (v int32, err error) {
+func (m *IdentityMutation) OldLoginType(ctx context.Context) (v int32, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLoginType is only allowed on UpdateOne operations")
 	}
@@ -691,7 +751,7 @@ func (m *PlayerIdentityMutation) OldLoginType(ctx context.Context) (v int32, err
 }
 
 // AddLoginType adds i to the "login_type" field.
-func (m *PlayerIdentityMutation) AddLoginType(i int32) {
+func (m *IdentityMutation) AddLoginType(i int32) {
 	if m.addlogin_type != nil {
 		*m.addlogin_type += i
 	} else {
@@ -700,7 +760,7 @@ func (m *PlayerIdentityMutation) AddLoginType(i int32) {
 }
 
 // AddedLoginType returns the value that was added to the "login_type" field in this mutation.
-func (m *PlayerIdentityMutation) AddedLoginType() (r int32, exists bool) {
+func (m *IdentityMutation) AddedLoginType() (r int32, exists bool) {
 	v := m.addlogin_type
 	if v == nil {
 		return
@@ -709,18 +769,18 @@ func (m *PlayerIdentityMutation) AddedLoginType() (r int32, exists bool) {
 }
 
 // ResetLoginType resets all changes to the "login_type" field.
-func (m *PlayerIdentityMutation) ResetLoginType() {
+func (m *IdentityMutation) ResetLoginType() {
 	m.login_type = nil
 	m.addlogin_type = nil
 }
 
 // SetAppID sets the "app_id" field.
-func (m *PlayerIdentityMutation) SetAppID(s string) {
+func (m *IdentityMutation) SetAppID(s string) {
 	m.app_id = &s
 }
 
 // AppID returns the value of the "app_id" field in the mutation.
-func (m *PlayerIdentityMutation) AppID() (r string, exists bool) {
+func (m *IdentityMutation) AppID() (r string, exists bool) {
 	v := m.app_id
 	if v == nil {
 		return
@@ -728,10 +788,10 @@ func (m *PlayerIdentityMutation) AppID() (r string, exists bool) {
 	return *v, true
 }
 
-// OldAppID returns the old "app_id" field's value of the PlayerIdentity entity.
-// If the PlayerIdentity object wasn't provided to the builder, the object is fetched from the database.
+// OldAppID returns the old "app_id" field's value of the Identity entity.
+// If the Identity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerIdentityMutation) OldAppID(ctx context.Context) (v string, err error) {
+func (m *IdentityMutation) OldAppID(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAppID is only allowed on UpdateOne operations")
 	}
@@ -746,17 +806,17 @@ func (m *PlayerIdentityMutation) OldAppID(ctx context.Context) (v string, err er
 }
 
 // ResetAppID resets all changes to the "app_id" field.
-func (m *PlayerIdentityMutation) ResetAppID() {
+func (m *IdentityMutation) ResetAppID() {
 	m.app_id = nil
 }
 
 // SetOpenID sets the "open_id" field.
-func (m *PlayerIdentityMutation) SetOpenID(s string) {
+func (m *IdentityMutation) SetOpenID(s string) {
 	m.open_id = &s
 }
 
 // OpenID returns the value of the "open_id" field in the mutation.
-func (m *PlayerIdentityMutation) OpenID() (r string, exists bool) {
+func (m *IdentityMutation) OpenID() (r string, exists bool) {
 	v := m.open_id
 	if v == nil {
 		return
@@ -764,10 +824,10 @@ func (m *PlayerIdentityMutation) OpenID() (r string, exists bool) {
 	return *v, true
 }
 
-// OldOpenID returns the old "open_id" field's value of the PlayerIdentity entity.
-// If the PlayerIdentity object wasn't provided to the builder, the object is fetched from the database.
+// OldOpenID returns the old "open_id" field's value of the Identity entity.
+// If the Identity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerIdentityMutation) OldOpenID(ctx context.Context) (v string, err error) {
+func (m *IdentityMutation) OldOpenID(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldOpenID is only allowed on UpdateOne operations")
 	}
@@ -782,17 +842,17 @@ func (m *PlayerIdentityMutation) OldOpenID(ctx context.Context) (v string, err e
 }
 
 // ResetOpenID resets all changes to the "open_id" field.
-func (m *PlayerIdentityMutation) ResetOpenID() {
+func (m *IdentityMutation) ResetOpenID() {
 	m.open_id = nil
 }
 
 // SetUnionID sets the "union_id" field.
-func (m *PlayerIdentityMutation) SetUnionID(s string) {
+func (m *IdentityMutation) SetUnionID(s string) {
 	m.union_id = &s
 }
 
 // UnionID returns the value of the "union_id" field in the mutation.
-func (m *PlayerIdentityMutation) UnionID() (r string, exists bool) {
+func (m *IdentityMutation) UnionID() (r string, exists bool) {
 	v := m.union_id
 	if v == nil {
 		return
@@ -800,10 +860,10 @@ func (m *PlayerIdentityMutation) UnionID() (r string, exists bool) {
 	return *v, true
 }
 
-// OldUnionID returns the old "union_id" field's value of the PlayerIdentity entity.
-// If the PlayerIdentity object wasn't provided to the builder, the object is fetched from the database.
+// OldUnionID returns the old "union_id" field's value of the Identity entity.
+// If the Identity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerIdentityMutation) OldUnionID(ctx context.Context) (v string, err error) {
+func (m *IdentityMutation) OldUnionID(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUnionID is only allowed on UpdateOne operations")
 	}
@@ -818,68 +878,88 @@ func (m *PlayerIdentityMutation) OldUnionID(ctx context.Context) (v string, err 
 }
 
 // ClearUnionID clears the value of the "union_id" field.
-func (m *PlayerIdentityMutation) ClearUnionID() {
+func (m *IdentityMutation) ClearUnionID() {
 	m.union_id = nil
-	m.clearedFields[playeridentity.FieldUnionID] = struct{}{}
+	m.clearedFields[identity.FieldUnionID] = struct{}{}
 }
 
 // UnionIDCleared returns if the "union_id" field was cleared in this mutation.
-func (m *PlayerIdentityMutation) UnionIDCleared() bool {
-	_, ok := m.clearedFields[playeridentity.FieldUnionID]
+func (m *IdentityMutation) UnionIDCleared() bool {
+	_, ok := m.clearedFields[identity.FieldUnionID]
 	return ok
 }
 
 // ResetUnionID resets all changes to the "union_id" field.
-func (m *PlayerIdentityMutation) ResetUnionID() {
+func (m *IdentityMutation) ResetUnionID() {
 	m.union_id = nil
-	delete(m.clearedFields, playeridentity.FieldUnionID)
+	delete(m.clearedFields, identity.FieldUnionID)
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (m *PlayerIdentityMutation) SetCreatedAt(t time.Time) {
-	m.created_at = &t
+// SetCreateAtUnix sets the "create_at_unix" field.
+func (m *IdentityMutation) SetCreateAtUnix(i int64) {
+	m.create_at_unix = &i
+	m.addcreate_at_unix = nil
 }
 
-// CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *PlayerIdentityMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.created_at
+// CreateAtUnix returns the value of the "create_at_unix" field in the mutation.
+func (m *IdentityMutation) CreateAtUnix() (r int64, exists bool) {
+	v := m.create_at_unix
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "created_at" field's value of the PlayerIdentity entity.
-// If the PlayerIdentity object wasn't provided to the builder, the object is fetched from the database.
+// OldCreateAtUnix returns the old "create_at_unix" field's value of the Identity entity.
+// If the Identity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PlayerIdentityMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+func (m *IdentityMutation) OldCreateAtUnix(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+		return v, errors.New("OldCreateAtUnix is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+		return v, errors.New("OldCreateAtUnix requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+		return v, fmt.Errorf("querying old value for OldCreateAtUnix: %w", err)
 	}
-	return oldValue.CreatedAt, nil
+	return oldValue.CreateAtUnix, nil
 }
 
-// ResetCreatedAt resets all changes to the "created_at" field.
-func (m *PlayerIdentityMutation) ResetCreatedAt() {
-	m.created_at = nil
+// AddCreateAtUnix adds i to the "create_at_unix" field.
+func (m *IdentityMutation) AddCreateAtUnix(i int64) {
+	if m.addcreate_at_unix != nil {
+		*m.addcreate_at_unix += i
+	} else {
+		m.addcreate_at_unix = &i
+	}
 }
 
-// Where appends a list predicates to the PlayerIdentityMutation builder.
-func (m *PlayerIdentityMutation) Where(ps ...predicate.PlayerIdentity) {
+// AddedCreateAtUnix returns the value that was added to the "create_at_unix" field in this mutation.
+func (m *IdentityMutation) AddedCreateAtUnix() (r int64, exists bool) {
+	v := m.addcreate_at_unix
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCreateAtUnix resets all changes to the "create_at_unix" field.
+func (m *IdentityMutation) ResetCreateAtUnix() {
+	m.create_at_unix = nil
+	m.addcreate_at_unix = nil
+}
+
+// Where appends a list predicates to the IdentityMutation builder.
+func (m *IdentityMutation) Where(ps ...predicate.Identity) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the PlayerIdentityMutation builder. Using this method,
+// WhereP appends storage-level predicates to the IdentityMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *PlayerIdentityMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.PlayerIdentity, len(ps))
+func (m *IdentityMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Identity, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -887,42 +967,42 @@ func (m *PlayerIdentityMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *PlayerIdentityMutation) Op() Op {
+func (m *IdentityMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *PlayerIdentityMutation) SetOp(op Op) {
+func (m *IdentityMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (PlayerIdentity).
-func (m *PlayerIdentityMutation) Type() string {
+// Type returns the node type of this mutation (Identity).
+func (m *IdentityMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *PlayerIdentityMutation) Fields() []string {
+func (m *IdentityMutation) Fields() []string {
 	fields := make([]string, 0, 6)
 	if m.uid != nil {
-		fields = append(fields, playeridentity.FieldUID)
+		fields = append(fields, identity.FieldUID)
 	}
 	if m.login_type != nil {
-		fields = append(fields, playeridentity.FieldLoginType)
+		fields = append(fields, identity.FieldLoginType)
 	}
 	if m.app_id != nil {
-		fields = append(fields, playeridentity.FieldAppID)
+		fields = append(fields, identity.FieldAppID)
 	}
 	if m.open_id != nil {
-		fields = append(fields, playeridentity.FieldOpenID)
+		fields = append(fields, identity.FieldOpenID)
 	}
 	if m.union_id != nil {
-		fields = append(fields, playeridentity.FieldUnionID)
+		fields = append(fields, identity.FieldUnionID)
 	}
-	if m.created_at != nil {
-		fields = append(fields, playeridentity.FieldCreatedAt)
+	if m.create_at_unix != nil {
+		fields = append(fields, identity.FieldCreateAtUnix)
 	}
 	return fields
 }
@@ -930,20 +1010,20 @@ func (m *PlayerIdentityMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *PlayerIdentityMutation) Field(name string) (ent.Value, bool) {
+func (m *IdentityMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case playeridentity.FieldUID:
+	case identity.FieldUID:
 		return m.UID()
-	case playeridentity.FieldLoginType:
+	case identity.FieldLoginType:
 		return m.LoginType()
-	case playeridentity.FieldAppID:
+	case identity.FieldAppID:
 		return m.AppID()
-	case playeridentity.FieldOpenID:
+	case identity.FieldOpenID:
 		return m.OpenID()
-	case playeridentity.FieldUnionID:
+	case identity.FieldUnionID:
 		return m.UnionID()
-	case playeridentity.FieldCreatedAt:
-		return m.CreatedAt()
+	case identity.FieldCreateAtUnix:
+		return m.CreateAtUnix()
 	}
 	return nil, false
 }
@@ -951,81 +1031,87 @@ func (m *PlayerIdentityMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *PlayerIdentityMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *IdentityMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case playeridentity.FieldUID:
+	case identity.FieldUID:
 		return m.OldUID(ctx)
-	case playeridentity.FieldLoginType:
+	case identity.FieldLoginType:
 		return m.OldLoginType(ctx)
-	case playeridentity.FieldAppID:
+	case identity.FieldAppID:
 		return m.OldAppID(ctx)
-	case playeridentity.FieldOpenID:
+	case identity.FieldOpenID:
 		return m.OldOpenID(ctx)
-	case playeridentity.FieldUnionID:
+	case identity.FieldUnionID:
 		return m.OldUnionID(ctx)
-	case playeridentity.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
+	case identity.FieldCreateAtUnix:
+		return m.OldCreateAtUnix(ctx)
 	}
-	return nil, fmt.Errorf("unknown PlayerIdentity field %s", name)
+	return nil, fmt.Errorf("unknown Identity field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *PlayerIdentityMutation) SetField(name string, value ent.Value) error {
+func (m *IdentityMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case playeridentity.FieldUID:
-		v, ok := value.(string)
+	case identity.FieldUID:
+		v, ok := value.(uint64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUID(v)
 		return nil
-	case playeridentity.FieldLoginType:
+	case identity.FieldLoginType:
 		v, ok := value.(int32)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLoginType(v)
 		return nil
-	case playeridentity.FieldAppID:
+	case identity.FieldAppID:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAppID(v)
 		return nil
-	case playeridentity.FieldOpenID:
+	case identity.FieldOpenID:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetOpenID(v)
 		return nil
-	case playeridentity.FieldUnionID:
+	case identity.FieldUnionID:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUnionID(v)
 		return nil
-	case playeridentity.FieldCreatedAt:
-		v, ok := value.(time.Time)
+	case identity.FieldCreateAtUnix:
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetCreatedAt(v)
+		m.SetCreateAtUnix(v)
 		return nil
 	}
-	return fmt.Errorf("unknown PlayerIdentity field %s", name)
+	return fmt.Errorf("unknown Identity field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *PlayerIdentityMutation) AddedFields() []string {
+func (m *IdentityMutation) AddedFields() []string {
 	var fields []string
+	if m.adduid != nil {
+		fields = append(fields, identity.FieldUID)
+	}
 	if m.addlogin_type != nil {
-		fields = append(fields, playeridentity.FieldLoginType)
+		fields = append(fields, identity.FieldLoginType)
+	}
+	if m.addcreate_at_unix != nil {
+		fields = append(fields, identity.FieldCreateAtUnix)
 	}
 	return fields
 }
@@ -1033,10 +1119,14 @@ func (m *PlayerIdentityMutation) AddedFields() []string {
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *PlayerIdentityMutation) AddedField(name string) (ent.Value, bool) {
+func (m *IdentityMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case playeridentity.FieldLoginType:
+	case identity.FieldUID:
+		return m.AddedUID()
+	case identity.FieldLoginType:
 		return m.AddedLoginType()
+	case identity.FieldCreateAtUnix:
+		return m.AddedCreateAtUnix()
 	}
 	return nil, false
 }
@@ -1044,117 +1134,131 @@ func (m *PlayerIdentityMutation) AddedField(name string) (ent.Value, bool) {
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *PlayerIdentityMutation) AddField(name string, value ent.Value) error {
+func (m *IdentityMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case playeridentity.FieldLoginType:
+	case identity.FieldUID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUID(v)
+		return nil
+	case identity.FieldLoginType:
 		v, ok := value.(int32)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddLoginType(v)
 		return nil
+	case identity.FieldCreateAtUnix:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCreateAtUnix(v)
+		return nil
 	}
-	return fmt.Errorf("unknown PlayerIdentity numeric field %s", name)
+	return fmt.Errorf("unknown Identity numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *PlayerIdentityMutation) ClearedFields() []string {
+func (m *IdentityMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(playeridentity.FieldUnionID) {
-		fields = append(fields, playeridentity.FieldUnionID)
+	if m.FieldCleared(identity.FieldUnionID) {
+		fields = append(fields, identity.FieldUnionID)
 	}
 	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *PlayerIdentityMutation) FieldCleared(name string) bool {
+func (m *IdentityMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *PlayerIdentityMutation) ClearField(name string) error {
+func (m *IdentityMutation) ClearField(name string) error {
 	switch name {
-	case playeridentity.FieldUnionID:
+	case identity.FieldUnionID:
 		m.ClearUnionID()
 		return nil
 	}
-	return fmt.Errorf("unknown PlayerIdentity nullable field %s", name)
+	return fmt.Errorf("unknown Identity nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *PlayerIdentityMutation) ResetField(name string) error {
+func (m *IdentityMutation) ResetField(name string) error {
 	switch name {
-	case playeridentity.FieldUID:
+	case identity.FieldUID:
 		m.ResetUID()
 		return nil
-	case playeridentity.FieldLoginType:
+	case identity.FieldLoginType:
 		m.ResetLoginType()
 		return nil
-	case playeridentity.FieldAppID:
+	case identity.FieldAppID:
 		m.ResetAppID()
 		return nil
-	case playeridentity.FieldOpenID:
+	case identity.FieldOpenID:
 		m.ResetOpenID()
 		return nil
-	case playeridentity.FieldUnionID:
+	case identity.FieldUnionID:
 		m.ResetUnionID()
 		return nil
-	case playeridentity.FieldCreatedAt:
-		m.ResetCreatedAt()
+	case identity.FieldCreateAtUnix:
+		m.ResetCreateAtUnix()
 		return nil
 	}
-	return fmt.Errorf("unknown PlayerIdentity field %s", name)
+	return fmt.Errorf("unknown Identity field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *PlayerIdentityMutation) AddedEdges() []string {
+func (m *IdentityMutation) AddedEdges() []string {
 	edges := make([]string, 0, 0)
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *PlayerIdentityMutation) AddedIDs(name string) []ent.Value {
+func (m *IdentityMutation) AddedIDs(name string) []ent.Value {
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *PlayerIdentityMutation) RemovedEdges() []string {
+func (m *IdentityMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 0)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *PlayerIdentityMutation) RemovedIDs(name string) []ent.Value {
+func (m *IdentityMutation) RemovedIDs(name string) []ent.Value {
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *PlayerIdentityMutation) ClearedEdges() []string {
+func (m *IdentityMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 0)
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *PlayerIdentityMutation) EdgeCleared(name string) bool {
+func (m *IdentityMutation) EdgeCleared(name string) bool {
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *PlayerIdentityMutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown PlayerIdentity unique edge %s", name)
+func (m *IdentityMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Identity unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *PlayerIdentityMutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown PlayerIdentity edge %s", name)
+func (m *IdentityMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Identity edge %s", name)
 }

@@ -10,35 +10,35 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/playeridentity"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/identity"
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/predicate"
 )
 
-// PlayerIdentityUpdate is the builder for updating PlayerIdentity entities.
-type PlayerIdentityUpdate struct {
+// IdentityUpdate is the builder for updating Identity entities.
+type IdentityUpdate struct {
 	config
 	hooks    []Hook
-	mutation *PlayerIdentityMutation
+	mutation *IdentityMutation
 }
 
-// Where appends a list predicates to the PlayerIdentityUpdate builder.
-func (_u *PlayerIdentityUpdate) Where(ps ...predicate.PlayerIdentity) *PlayerIdentityUpdate {
+// Where appends a list predicates to the IdentityUpdate builder.
+func (_u *IdentityUpdate) Where(ps ...predicate.Identity) *IdentityUpdate {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
-// Mutation returns the PlayerIdentityMutation object of the builder.
-func (_u *PlayerIdentityUpdate) Mutation() *PlayerIdentityMutation {
+// Mutation returns the IdentityMutation object of the builder.
+func (_u *IdentityUpdate) Mutation() *IdentityMutation {
 	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (_u *PlayerIdentityUpdate) Save(ctx context.Context) (int, error) {
+func (_u *IdentityUpdate) Save(ctx context.Context) (int, error) {
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *PlayerIdentityUpdate) SaveX(ctx context.Context) int {
+func (_u *IdentityUpdate) SaveX(ctx context.Context) int {
 	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -47,20 +47,20 @@ func (_u *PlayerIdentityUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (_u *PlayerIdentityUpdate) Exec(ctx context.Context) error {
+func (_u *IdentityUpdate) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *PlayerIdentityUpdate) ExecX(ctx context.Context) {
+func (_u *IdentityUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (_u *PlayerIdentityUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(playeridentity.Table, playeridentity.Columns, sqlgraph.NewFieldSpec(playeridentity.FieldID, field.TypeInt))
+func (_u *IdentityUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	_spec := sqlgraph.NewUpdateSpec(identity.Table, identity.Columns, sqlgraph.NewFieldSpec(identity.FieldID, field.TypeUint64))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -69,11 +69,11 @@ func (_u *PlayerIdentityUpdate) sqlSave(ctx context.Context) (_node int, err err
 		}
 	}
 	if _u.mutation.UnionIDCleared() {
-		_spec.ClearField(playeridentity.FieldUnionID, field.TypeString)
+		_spec.ClearField(identity.FieldUnionID, field.TypeString)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{playeridentity.Label}
+			err = &NotFoundError{identity.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -83,39 +83,39 @@ func (_u *PlayerIdentityUpdate) sqlSave(ctx context.Context) (_node int, err err
 	return _node, nil
 }
 
-// PlayerIdentityUpdateOne is the builder for updating a single PlayerIdentity entity.
-type PlayerIdentityUpdateOne struct {
+// IdentityUpdateOne is the builder for updating a single Identity entity.
+type IdentityUpdateOne struct {
 	config
 	fields   []string
 	hooks    []Hook
-	mutation *PlayerIdentityMutation
+	mutation *IdentityMutation
 }
 
-// Mutation returns the PlayerIdentityMutation object of the builder.
-func (_u *PlayerIdentityUpdateOne) Mutation() *PlayerIdentityMutation {
+// Mutation returns the IdentityMutation object of the builder.
+func (_u *IdentityUpdateOne) Mutation() *IdentityMutation {
 	return _u.mutation
 }
 
-// Where appends a list predicates to the PlayerIdentityUpdate builder.
-func (_u *PlayerIdentityUpdateOne) Where(ps ...predicate.PlayerIdentity) *PlayerIdentityUpdateOne {
+// Where appends a list predicates to the IdentityUpdate builder.
+func (_u *IdentityUpdateOne) Where(ps ...predicate.Identity) *IdentityUpdateOne {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (_u *PlayerIdentityUpdateOne) Select(field string, fields ...string) *PlayerIdentityUpdateOne {
+func (_u *IdentityUpdateOne) Select(field string, fields ...string) *IdentityUpdateOne {
 	_u.fields = append([]string{field}, fields...)
 	return _u
 }
 
-// Save executes the query and returns the updated PlayerIdentity entity.
-func (_u *PlayerIdentityUpdateOne) Save(ctx context.Context) (*PlayerIdentity, error) {
+// Save executes the query and returns the updated Identity entity.
+func (_u *IdentityUpdateOne) Save(ctx context.Context) (*Identity, error) {
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *PlayerIdentityUpdateOne) SaveX(ctx context.Context) *PlayerIdentity {
+func (_u *IdentityUpdateOne) SaveX(ctx context.Context) *Identity {
 	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -124,33 +124,33 @@ func (_u *PlayerIdentityUpdateOne) SaveX(ctx context.Context) *PlayerIdentity {
 }
 
 // Exec executes the query on the entity.
-func (_u *PlayerIdentityUpdateOne) Exec(ctx context.Context) error {
+func (_u *IdentityUpdateOne) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *PlayerIdentityUpdateOne) ExecX(ctx context.Context) {
+func (_u *IdentityUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (_u *PlayerIdentityUpdateOne) sqlSave(ctx context.Context) (_node *PlayerIdentity, err error) {
-	_spec := sqlgraph.NewUpdateSpec(playeridentity.Table, playeridentity.Columns, sqlgraph.NewFieldSpec(playeridentity.FieldID, field.TypeInt))
+func (_u *IdentityUpdateOne) sqlSave(ctx context.Context) (_node *Identity, err error) {
+	_spec := sqlgraph.NewUpdateSpec(identity.Table, identity.Columns, sqlgraph.NewFieldSpec(identity.FieldID, field.TypeUint64))
 	id, ok := _u.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "PlayerIdentity.id" for update`)}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Identity.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
 	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, playeridentity.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, identity.FieldID)
 		for _, f := range fields {
-			if !playeridentity.ValidColumn(f) {
+			if !identity.ValidColumn(f) {
 				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 			}
-			if f != playeridentity.FieldID {
+			if f != identity.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, f)
 			}
 		}
@@ -163,14 +163,14 @@ func (_u *PlayerIdentityUpdateOne) sqlSave(ctx context.Context) (_node *PlayerId
 		}
 	}
 	if _u.mutation.UnionIDCleared() {
-		_spec.ClearField(playeridentity.FieldUnionID, field.TypeString)
+		_spec.ClearField(identity.FieldUnionID, field.TypeString)
 	}
-	_node = &PlayerIdentity{config: _u.config}
+	_node = &Identity{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{playeridentity.Label}
+			err = &NotFoundError{identity.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}

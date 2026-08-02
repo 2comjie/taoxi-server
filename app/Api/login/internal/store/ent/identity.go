@@ -5,44 +5,42 @@ package ent
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/playeridentity"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/identity"
 )
 
-// PlayerIdentity is the model entity for the PlayerIdentity schema.
-type PlayerIdentity struct {
+// Identity is the model entity for the Identity schema.
+type Identity struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
-	// UID holds the value of the "uid" field.
-	UID string `json:"uid,omitempty"`
-	// LoginType holds the value of the "login_type" field.
+	// 身份记录自增主键
+	ID uint64 `json:"id,omitempty"`
+	// 玩家UID
+	UID uint64 `json:"uid,omitempty"`
+	// 登录类型
 	LoginType int32 `json:"login_type,omitempty"`
-	// AppID holds the value of the "app_id" field.
+	// 第三方应用ID
 	AppID string `json:"app_id,omitempty"`
-	// OpenID holds the value of the "open_id" field.
+	// 第三方账号ID
 	OpenID string `json:"open_id,omitempty"`
-	// UnionID holds the value of the "union_id" field.
-	UnionID string `json:"union_id,omitempty"`
-	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt    time.Time `json:"created_at,omitempty"`
+	// 第三方跨应用账号ID
+	UnionID *string `json:"union_id,omitempty"`
+	// 创建时间，Unix秒
+	CreateAtUnix int64 `json:"create_at_unix,omitempty"`
 	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*PlayerIdentity) scanValues(columns []string) ([]any, error) {
+func (*Identity) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case playeridentity.FieldID, playeridentity.FieldLoginType:
+		case identity.FieldID, identity.FieldUID, identity.FieldLoginType, identity.FieldCreateAtUnix:
 			values[i] = new(sql.NullInt64)
-		case playeridentity.FieldUID, playeridentity.FieldAppID, playeridentity.FieldOpenID, playeridentity.FieldUnionID:
+		case identity.FieldAppID, identity.FieldOpenID, identity.FieldUnionID:
 			values[i] = new(sql.NullString)
-		case playeridentity.FieldCreatedAt:
-			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -51,54 +49,55 @@ func (*PlayerIdentity) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the PlayerIdentity fields.
-func (_m *PlayerIdentity) assignValues(columns []string, values []any) error {
+// to the Identity fields.
+func (_m *Identity) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case playeridentity.FieldID:
+		case identity.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			_m.ID = int(value.Int64)
-		case playeridentity.FieldUID:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			_m.ID = uint64(value.Int64)
+		case identity.FieldUID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field uid", values[i])
 			} else if value.Valid {
-				_m.UID = value.String
+				_m.UID = uint64(value.Int64)
 			}
-		case playeridentity.FieldLoginType:
+		case identity.FieldLoginType:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field login_type", values[i])
 			} else if value.Valid {
 				_m.LoginType = int32(value.Int64)
 			}
-		case playeridentity.FieldAppID:
+		case identity.FieldAppID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field app_id", values[i])
 			} else if value.Valid {
 				_m.AppID = value.String
 			}
-		case playeridentity.FieldOpenID:
+		case identity.FieldOpenID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field open_id", values[i])
 			} else if value.Valid {
 				_m.OpenID = value.String
 			}
-		case playeridentity.FieldUnionID:
+		case identity.FieldUnionID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field union_id", values[i])
 			} else if value.Valid {
-				_m.UnionID = value.String
+				_m.UnionID = new(string)
+				*_m.UnionID = value.String
 			}
-		case playeridentity.FieldCreatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+		case identity.FieldCreateAtUnix:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field create_at_unix", values[i])
 			} else if value.Valid {
-				_m.CreatedAt = value.Time
+				_m.CreateAtUnix = value.Int64
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -107,37 +106,37 @@ func (_m *PlayerIdentity) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the PlayerIdentity.
+// Value returns the ent.Value that was dynamically selected and assigned to the Identity.
 // This includes values selected through modifiers, order, etc.
-func (_m *PlayerIdentity) Value(name string) (ent.Value, error) {
+func (_m *Identity) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// Update returns a builder for updating this PlayerIdentity.
-// Note that you need to call PlayerIdentity.Unwrap() before calling this method if this PlayerIdentity
+// Update returns a builder for updating this Identity.
+// Note that you need to call Identity.Unwrap() before calling this method if this Identity
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *PlayerIdentity) Update() *PlayerIdentityUpdateOne {
-	return NewPlayerIdentityClient(_m.config).UpdateOne(_m)
+func (_m *Identity) Update() *IdentityUpdateOne {
+	return NewIdentityClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the PlayerIdentity entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Identity entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *PlayerIdentity) Unwrap() *PlayerIdentity {
+func (_m *Identity) Unwrap() *Identity {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: PlayerIdentity is not a transactional entity")
+		panic("ent: Identity is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *PlayerIdentity) String() string {
+func (_m *Identity) String() string {
 	var builder strings.Builder
-	builder.WriteString("PlayerIdentity(")
+	builder.WriteString("Identity(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("uid=")
-	builder.WriteString(_m.UID)
+	builder.WriteString(fmt.Sprintf("%v", _m.UID))
 	builder.WriteString(", ")
 	builder.WriteString("login_type=")
 	builder.WriteString(fmt.Sprintf("%v", _m.LoginType))
@@ -148,14 +147,16 @@ func (_m *PlayerIdentity) String() string {
 	builder.WriteString("open_id=")
 	builder.WriteString(_m.OpenID)
 	builder.WriteString(", ")
-	builder.WriteString("union_id=")
-	builder.WriteString(_m.UnionID)
+	if v := _m.UnionID; v != nil {
+		builder.WriteString("union_id=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("created_at=")
-	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString("create_at_unix=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CreateAtUnix))
 	builder.WriteByte(')')
 	return builder.String()
 }
 
-// PlayerIdentities is a parsable slice of PlayerIdentity.
-type PlayerIdentities []*PlayerIdentity
+// Identities is a parsable slice of Identity.
+type Identities []*Identity

@@ -14,8 +14,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/player"
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/playeridentity"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/account"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/identity"
 )
 
 // Client is the client that holds all ent builders.
@@ -23,10 +23,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
-	// Player is the client for interacting with the Player builders.
-	Player *PlayerClient
-	// PlayerIdentity is the client for interacting with the PlayerIdentity builders.
-	PlayerIdentity *PlayerIdentityClient
+	// Account is the client for interacting with the Account builders.
+	Account *AccountClient
+	// Identity is the client for interacting with the Identity builders.
+	Identity *IdentityClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -38,8 +38,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
-	c.Player = NewPlayerClient(c.config)
-	c.PlayerIdentity = NewPlayerIdentityClient(c.config)
+	c.Account = NewAccountClient(c.config)
+	c.Identity = NewIdentityClient(c.config)
 }
 
 type (
@@ -130,10 +130,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:            ctx,
-		config:         cfg,
-		Player:         NewPlayerClient(cfg),
-		PlayerIdentity: NewPlayerIdentityClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		Account:  NewAccountClient(cfg),
+		Identity: NewIdentityClient(cfg),
 	}, nil
 }
 
@@ -151,17 +151,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:            ctx,
-		config:         cfg,
-		Player:         NewPlayerClient(cfg),
-		PlayerIdentity: NewPlayerIdentityClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		Account:  NewAccountClient(cfg),
+		Identity: NewIdentityClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Player.
+//		Account.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -183,130 +183,130 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Player.Use(hooks...)
-	c.PlayerIdentity.Use(hooks...)
+	c.Account.Use(hooks...)
+	c.Identity.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Player.Intercept(interceptors...)
-	c.PlayerIdentity.Intercept(interceptors...)
+	c.Account.Intercept(interceptors...)
+	c.Identity.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
-	case *PlayerMutation:
-		return c.Player.mutate(ctx, m)
-	case *PlayerIdentityMutation:
-		return c.PlayerIdentity.mutate(ctx, m)
+	case *AccountMutation:
+		return c.Account.mutate(ctx, m)
+	case *IdentityMutation:
+		return c.Identity.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
 }
 
-// PlayerClient is a client for the Player schema.
-type PlayerClient struct {
+// AccountClient is a client for the Account schema.
+type AccountClient struct {
 	config
 }
 
-// NewPlayerClient returns a client for the Player from the given config.
-func NewPlayerClient(c config) *PlayerClient {
-	return &PlayerClient{config: c}
+// NewAccountClient returns a client for the Account from the given config.
+func NewAccountClient(c config) *AccountClient {
+	return &AccountClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `player.Hooks(f(g(h())))`.
-func (c *PlayerClient) Use(hooks ...Hook) {
-	c.hooks.Player = append(c.hooks.Player, hooks...)
+// A call to `Use(f, g, h)` equals to `account.Hooks(f(g(h())))`.
+func (c *AccountClient) Use(hooks ...Hook) {
+	c.hooks.Account = append(c.hooks.Account, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `player.Intercept(f(g(h())))`.
-func (c *PlayerClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Player = append(c.inters.Player, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `account.Intercept(f(g(h())))`.
+func (c *AccountClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Account = append(c.inters.Account, interceptors...)
 }
 
-// Create returns a builder for creating a Player entity.
-func (c *PlayerClient) Create() *PlayerCreate {
-	mutation := newPlayerMutation(c.config, OpCreate)
-	return &PlayerCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Account entity.
+func (c *AccountClient) Create() *AccountCreate {
+	mutation := newAccountMutation(c.config, OpCreate)
+	return &AccountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Player entities.
-func (c *PlayerClient) CreateBulk(builders ...*PlayerCreate) *PlayerCreateBulk {
-	return &PlayerCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Account entities.
+func (c *AccountClient) CreateBulk(builders ...*AccountCreate) *AccountCreateBulk {
+	return &AccountCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *PlayerClient) MapCreateBulk(slice any, setFunc func(*PlayerCreate, int)) *PlayerCreateBulk {
+func (c *AccountClient) MapCreateBulk(slice any, setFunc func(*AccountCreate, int)) *AccountCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &PlayerCreateBulk{err: fmt.Errorf("calling to PlayerClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &AccountCreateBulk{err: fmt.Errorf("calling to AccountClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*PlayerCreate, rv.Len())
+	builders := make([]*AccountCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &PlayerCreateBulk{config: c.config, builders: builders}
+	return &AccountCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Player.
-func (c *PlayerClient) Update() *PlayerUpdate {
-	mutation := newPlayerMutation(c.config, OpUpdate)
-	return &PlayerUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Account.
+func (c *AccountClient) Update() *AccountUpdate {
+	mutation := newAccountMutation(c.config, OpUpdate)
+	return &AccountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *PlayerClient) UpdateOne(_m *Player) *PlayerUpdateOne {
-	mutation := newPlayerMutation(c.config, OpUpdateOne, withPlayer(_m))
-	return &PlayerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *AccountClient) UpdateOne(_m *Account) *AccountUpdateOne {
+	mutation := newAccountMutation(c.config, OpUpdateOne, withAccount(_m))
+	return &AccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *PlayerClient) UpdateOneID(id string) *PlayerUpdateOne {
-	mutation := newPlayerMutation(c.config, OpUpdateOne, withPlayerID(id))
-	return &PlayerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *AccountClient) UpdateOneID(id uint64) *AccountUpdateOne {
+	mutation := newAccountMutation(c.config, OpUpdateOne, withAccountID(id))
+	return &AccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Player.
-func (c *PlayerClient) Delete() *PlayerDelete {
-	mutation := newPlayerMutation(c.config, OpDelete)
-	return &PlayerDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Account.
+func (c *AccountClient) Delete() *AccountDelete {
+	mutation := newAccountMutation(c.config, OpDelete)
+	return &AccountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *PlayerClient) DeleteOne(_m *Player) *PlayerDeleteOne {
+func (c *AccountClient) DeleteOne(_m *Account) *AccountDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *PlayerClient) DeleteOneID(id string) *PlayerDeleteOne {
-	builder := c.Delete().Where(player.ID(id))
+func (c *AccountClient) DeleteOneID(id uint64) *AccountDeleteOne {
+	builder := c.Delete().Where(account.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &PlayerDeleteOne{builder}
+	return &AccountDeleteOne{builder}
 }
 
-// Query returns a query builder for Player.
-func (c *PlayerClient) Query() *PlayerQuery {
-	return &PlayerQuery{
+// Query returns a query builder for Account.
+func (c *AccountClient) Query() *AccountQuery {
+	return &AccountQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypePlayer},
+		ctx:    &QueryContext{Type: TypeAccount},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Player entity by its id.
-func (c *PlayerClient) Get(ctx context.Context, id string) (*Player, error) {
-	return c.Query().Where(player.ID(id)).Only(ctx)
+// Get returns a Account entity by its id.
+func (c *AccountClient) Get(ctx context.Context, id uint64) (*Account, error) {
+	return c.Query().Where(account.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *PlayerClient) GetX(ctx context.Context, id string) *Player {
+func (c *AccountClient) GetX(ctx context.Context, id uint64) *Account {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -315,131 +315,131 @@ func (c *PlayerClient) GetX(ctx context.Context, id string) *Player {
 }
 
 // Hooks returns the client hooks.
-func (c *PlayerClient) Hooks() []Hook {
-	return c.hooks.Player
+func (c *AccountClient) Hooks() []Hook {
+	return c.hooks.Account
 }
 
 // Interceptors returns the client interceptors.
-func (c *PlayerClient) Interceptors() []Interceptor {
-	return c.inters.Player
+func (c *AccountClient) Interceptors() []Interceptor {
+	return c.inters.Account
 }
 
-func (c *PlayerClient) mutate(ctx context.Context, m *PlayerMutation) (Value, error) {
+func (c *AccountClient) mutate(ctx context.Context, m *AccountMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&PlayerCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&AccountCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&PlayerUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&AccountUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&PlayerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&AccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&PlayerDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&AccountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Player mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Account mutation op: %q", m.Op())
 	}
 }
 
-// PlayerIdentityClient is a client for the PlayerIdentity schema.
-type PlayerIdentityClient struct {
+// IdentityClient is a client for the Identity schema.
+type IdentityClient struct {
 	config
 }
 
-// NewPlayerIdentityClient returns a client for the PlayerIdentity from the given config.
-func NewPlayerIdentityClient(c config) *PlayerIdentityClient {
-	return &PlayerIdentityClient{config: c}
+// NewIdentityClient returns a client for the Identity from the given config.
+func NewIdentityClient(c config) *IdentityClient {
+	return &IdentityClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `playeridentity.Hooks(f(g(h())))`.
-func (c *PlayerIdentityClient) Use(hooks ...Hook) {
-	c.hooks.PlayerIdentity = append(c.hooks.PlayerIdentity, hooks...)
+// A call to `Use(f, g, h)` equals to `identity.Hooks(f(g(h())))`.
+func (c *IdentityClient) Use(hooks ...Hook) {
+	c.hooks.Identity = append(c.hooks.Identity, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `playeridentity.Intercept(f(g(h())))`.
-func (c *PlayerIdentityClient) Intercept(interceptors ...Interceptor) {
-	c.inters.PlayerIdentity = append(c.inters.PlayerIdentity, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `identity.Intercept(f(g(h())))`.
+func (c *IdentityClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Identity = append(c.inters.Identity, interceptors...)
 }
 
-// Create returns a builder for creating a PlayerIdentity entity.
-func (c *PlayerIdentityClient) Create() *PlayerIdentityCreate {
-	mutation := newPlayerIdentityMutation(c.config, OpCreate)
-	return &PlayerIdentityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Identity entity.
+func (c *IdentityClient) Create() *IdentityCreate {
+	mutation := newIdentityMutation(c.config, OpCreate)
+	return &IdentityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of PlayerIdentity entities.
-func (c *PlayerIdentityClient) CreateBulk(builders ...*PlayerIdentityCreate) *PlayerIdentityCreateBulk {
-	return &PlayerIdentityCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Identity entities.
+func (c *IdentityClient) CreateBulk(builders ...*IdentityCreate) *IdentityCreateBulk {
+	return &IdentityCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *PlayerIdentityClient) MapCreateBulk(slice any, setFunc func(*PlayerIdentityCreate, int)) *PlayerIdentityCreateBulk {
+func (c *IdentityClient) MapCreateBulk(slice any, setFunc func(*IdentityCreate, int)) *IdentityCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &PlayerIdentityCreateBulk{err: fmt.Errorf("calling to PlayerIdentityClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &IdentityCreateBulk{err: fmt.Errorf("calling to IdentityClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*PlayerIdentityCreate, rv.Len())
+	builders := make([]*IdentityCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &PlayerIdentityCreateBulk{config: c.config, builders: builders}
+	return &IdentityCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for PlayerIdentity.
-func (c *PlayerIdentityClient) Update() *PlayerIdentityUpdate {
-	mutation := newPlayerIdentityMutation(c.config, OpUpdate)
-	return &PlayerIdentityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Identity.
+func (c *IdentityClient) Update() *IdentityUpdate {
+	mutation := newIdentityMutation(c.config, OpUpdate)
+	return &IdentityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *PlayerIdentityClient) UpdateOne(_m *PlayerIdentity) *PlayerIdentityUpdateOne {
-	mutation := newPlayerIdentityMutation(c.config, OpUpdateOne, withPlayerIdentity(_m))
-	return &PlayerIdentityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *IdentityClient) UpdateOne(_m *Identity) *IdentityUpdateOne {
+	mutation := newIdentityMutation(c.config, OpUpdateOne, withIdentity(_m))
+	return &IdentityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *PlayerIdentityClient) UpdateOneID(id int) *PlayerIdentityUpdateOne {
-	mutation := newPlayerIdentityMutation(c.config, OpUpdateOne, withPlayerIdentityID(id))
-	return &PlayerIdentityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *IdentityClient) UpdateOneID(id uint64) *IdentityUpdateOne {
+	mutation := newIdentityMutation(c.config, OpUpdateOne, withIdentityID(id))
+	return &IdentityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for PlayerIdentity.
-func (c *PlayerIdentityClient) Delete() *PlayerIdentityDelete {
-	mutation := newPlayerIdentityMutation(c.config, OpDelete)
-	return &PlayerIdentityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Identity.
+func (c *IdentityClient) Delete() *IdentityDelete {
+	mutation := newIdentityMutation(c.config, OpDelete)
+	return &IdentityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *PlayerIdentityClient) DeleteOne(_m *PlayerIdentity) *PlayerIdentityDeleteOne {
+func (c *IdentityClient) DeleteOne(_m *Identity) *IdentityDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *PlayerIdentityClient) DeleteOneID(id int) *PlayerIdentityDeleteOne {
-	builder := c.Delete().Where(playeridentity.ID(id))
+func (c *IdentityClient) DeleteOneID(id uint64) *IdentityDeleteOne {
+	builder := c.Delete().Where(identity.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &PlayerIdentityDeleteOne{builder}
+	return &IdentityDeleteOne{builder}
 }
 
-// Query returns a query builder for PlayerIdentity.
-func (c *PlayerIdentityClient) Query() *PlayerIdentityQuery {
-	return &PlayerIdentityQuery{
+// Query returns a query builder for Identity.
+func (c *IdentityClient) Query() *IdentityQuery {
+	return &IdentityQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypePlayerIdentity},
+		ctx:    &QueryContext{Type: TypeIdentity},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a PlayerIdentity entity by its id.
-func (c *PlayerIdentityClient) Get(ctx context.Context, id int) (*PlayerIdentity, error) {
-	return c.Query().Where(playeridentity.ID(id)).Only(ctx)
+// Get returns a Identity entity by its id.
+func (c *IdentityClient) Get(ctx context.Context, id uint64) (*Identity, error) {
+	return c.Query().Where(identity.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *PlayerIdentityClient) GetX(ctx context.Context, id int) *PlayerIdentity {
+func (c *IdentityClient) GetX(ctx context.Context, id uint64) *Identity {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -448,36 +448,36 @@ func (c *PlayerIdentityClient) GetX(ctx context.Context, id int) *PlayerIdentity
 }
 
 // Hooks returns the client hooks.
-func (c *PlayerIdentityClient) Hooks() []Hook {
-	return c.hooks.PlayerIdentity
+func (c *IdentityClient) Hooks() []Hook {
+	return c.hooks.Identity
 }
 
 // Interceptors returns the client interceptors.
-func (c *PlayerIdentityClient) Interceptors() []Interceptor {
-	return c.inters.PlayerIdentity
+func (c *IdentityClient) Interceptors() []Interceptor {
+	return c.inters.Identity
 }
 
-func (c *PlayerIdentityClient) mutate(ctx context.Context, m *PlayerIdentityMutation) (Value, error) {
+func (c *IdentityClient) mutate(ctx context.Context, m *IdentityMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&PlayerIdentityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&IdentityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&PlayerIdentityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&IdentityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&PlayerIdentityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&IdentityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&PlayerIdentityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&IdentityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown PlayerIdentity mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Identity mutation op: %q", m.Op())
 	}
 }
 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Player, PlayerIdentity []ent.Hook
+		Account, Identity []ent.Hook
 	}
 	inters struct {
-		Player, PlayerIdentity []ent.Interceptor
+		Account, Identity []ent.Interceptor
 	}
 )

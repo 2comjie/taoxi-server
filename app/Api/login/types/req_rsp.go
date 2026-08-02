@@ -1,12 +1,12 @@
-package types
-
-type LoginType int32
+package loginTypes
 
 const (
 	LoginTypeGuest  LoginType = 1
 	LoginTypeGoogle LoginType = 2
 	LoginTypeApple  LoginType = 3
 	LoginTypeWeChat LoginType = 4
+
+	LoginTypeDebug LoginType = 100 // debug 登陆 uid 就是第三方凭证
 )
 
 type LoginReq struct {
@@ -20,8 +20,8 @@ type LoginReq struct {
 }
 
 type LoginRsp struct {
-	UID         string `json:"uid"`
-	OpenID      string `json:"openid"`
+	Uid         uint64 `json:"uid"`
+	OpenId      string `json:"openid"`
 	IsRegister  bool   `json:"is_register"`
 	GateToken   string `json:"gate_token"`
 	AccessToken string `json:"access_token"`

@@ -1,4 +1,6 @@
-package types
+package loginTypes
+
+type LoginType int32
 
 type Identity struct {
 	AppID   string

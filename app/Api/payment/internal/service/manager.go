@@ -1,5 +1,13 @@
 package service
 
+import (
+	"context"
+
+	paymentStore "github.com/2comjie/taoxi-server/app/Api/payment/internal/store"
+	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
+	"github.com/2comjie/taoxi-server/pkg/stderr"
+)
+
 // 内部状态  第三方状态  可能触发的场景                              处理方式
 //
 // Pending   Pending     订单刚创建、延迟付款、支付尚未完成          有凭证就保存，保持Pending。
@@ -28,3 +36,30 @@ package service
 //
 // Cancelled Cancelled   超时订单最终被平台取消，或者退款回收完成       正常终态，记录第三方取消/退款时间和原因。
 //                                                                  重复回调直接返回成功。
+
+type Manager struct {
+	store    *paymentStore.Store
+	channels map[paymentTypes.PaymentType]PaymentChannel
+}
+
+func NewManager(store *paymentStore.Store) *Manager {
+	if store == nil {
+		panic("payment: Store不能为空")
+	}
+	return &Manager{
+		store:    store,
+		channels: make(map[paymentTypes.PaymentType]PaymentChannel),
+	}
+}
+
+func (m *Manager) CreateOrder(ctx context.Context, uid uint64, req *paymentTypes.CreateOrderReq) (*paymentTypes.CreateOrderRsp, *stderr.Error) {
+	// 1. 获取支付渠道
+
+	// 2. 查询并校验商品配置
+	// 3. 获取分布式锁
+	// 4. 查询可服用的Pending订单
+	// 5. 没有则创建订单
+	// 6. 构建Apple/Google客户端参数
+	// 7. 返回订单
+
+}

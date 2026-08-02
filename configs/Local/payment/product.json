@@ -1,0 +1,11 @@
+{
+  "1001": {
+    "Id": 1001,
+    "ThirdPartyProductId": {
+      "1": "apple_product_id",
+      "2": "google_product_id"
+    },
+    "PriceMap": {},
+    "Rewards": []
+  }
+}

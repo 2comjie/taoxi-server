@@ -4,15 +4,14 @@ import (
 	"context"
 	"crypto/ed25519"
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	loginStore "github.com/2comjie/taoxi-server/app/Api/login/internal/store"
 	loginTypes "github.com/2comjie/taoxi-server/app/Api/login/types"
 	"github.com/2comjie/taoxi-server/pkg/jwt"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
 	"github.com/2comjie/wali/logx"
+	"github.com/spf13/cast"
 )
 
 var ErrInvalidCredential = errors.New("login: 登录凭证无效")
@@ -20,45 +19,33 @@ var ErrInvalidCredential = errors.New("login: 登录凭证无效")
 type LoginProvider interface {
 	Type() loginTypes.LoginType
 	Authenticate(ctx context.Context, req *loginTypes.LoginReq) (*loginTypes.Identity, error)
+	FindOrCreateAccount(ctx context.Context, identity loginTypes.Identity) (uid uint64, registered bool, err error)
 }
 
 type Manager struct {
-	store      *loginStore.Store
 	providers  map[loginTypes.LoginType]LoginProvider
 	privateKey ed25519.PrivateKey
 }
 
-func NewManager(store *loginStore.Store, privateKey ed25519.PrivateKey) (*Manager, error) {
-	if store == nil {
-		return nil, errors.New("login: Store不能为空")
-	}
+func NewManager(privateKey ed25519.PrivateKey) *Manager {
 	if len(privateKey) != ed25519.PrivateKeySize {
-		return nil, errors.New("login: JWT私钥无效")
+		panic("login: 私钥长度错误")
 	}
 	return &Manager{
-		store:      store,
 		providers:  make(map[loginTypes.LoginType]LoginProvider),
 		privateKey: append(ed25519.PrivateKey(nil), privateKey...),
-	}, nil
+	}
 }
 
-func (m *Manager) Register(provider LoginProvider) error {
+func (m *Manager) Register(provider LoginProvider) {
 	if provider == nil {
-		return errors.New("login: LoginProvider不能为空")
+		panic("login: LoginProvider不能为空")
 	}
 	loginType := provider.Type()
-	if _, exists := m.providers[loginType]; exists {
-		return fmt.Errorf("login: LoginProvider重复注册 type=%d", loginType)
-	}
 	m.providers[loginType] = provider
-	return nil
 }
 
 func (m *Manager) Login(ctx context.Context, req *loginTypes.LoginReq) (*loginTypes.LoginRsp, *stderr.Error) {
-	if req == nil {
-		return nil, stderr.New(http.StatusBadRequest, "登录请求不能为空")
-	}
-
 	provider, exists := m.providers[req.LoginType]
 	if !exists {
 		return nil, stderr.New(http.StatusBadRequest, "不支持的登录方式")
@@ -71,7 +58,7 @@ func (m *Manager) Login(ctx context.Context, req *loginTypes.LoginReq) (*loginTy
 		logx.Errorf("login: 校验第三方登录凭证失败 type=%d err=%v", req.LoginType, err)
 		return nil, stderr.New(http.StatusInternalServerError, "登录失败")
 	}
-	uid, registered, err := m.store.FindOrCrateAccount(ctx, req.LoginType, *loginIdentity)
+	uid, registered, err := provider.FindOrCreateAccount(ctx, *loginIdentity)
 	if err != nil {
 		if errors.Is(err, loginStore.ErrAccountDeleted) {
 			return nil, stderr.New(http.StatusForbidden, "账号已注销")
@@ -80,7 +67,7 @@ func (m *Manager) Login(ctx context.Context, req *loginTypes.LoginReq) (*loginTy
 		return nil, stderr.New(http.StatusInternalServerError, "登录失败")
 	}
 
-	uidValue := strconv.FormatUint(uid, 10)
+	uidValue := cast.ToString(uid)
 	gateToken, err := jwt.Generate(m.privateKey, uidValue)
 	if err != nil {
 		logx.Errorf("login: 生成Gate token失败 uid=%d err=%v", uid, err)

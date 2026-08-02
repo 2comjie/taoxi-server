@@ -32,10 +32,10 @@ func (s *Store) Migrate(ctx context.Context) error {
 	return nil
 }
 
-func (s *Store) FindOrCrateAccount(ctx context.Context, loginType loginTypes.LoginType, loginIdentity loginTypes.Identity) (uint64, bool, error) {
+func (s *Store) FindOrCreateAccount(ctx context.Context, loginType loginTypes.LoginType, loginIdentity loginTypes.Identity) (uint64, bool, error) {
 	logCtx := logx.WithField("action", "查找或者创建账号").WithField("loginType", loginType).WithField("openId", loginIdentity.OpenID)
 	logCtx.Infof("查询第三方登录记录")
-	uid, found, err := s.findIdentity(ctx, loginType, loginIdentity.AppID, loginIdentity.OpenID)
+	uid, found, err := s.FindLoginRecord(ctx, loginType, loginIdentity.AppID, loginIdentity.OpenID)
 	if err != nil {
 		logCtx.Errorf("查询登陆记录失败: %v", err)
 		return 0, false, err
@@ -64,7 +64,7 @@ func (s *Store) FindOrCrateAccount(ctx context.Context, loginType loginTypes.Log
 
 	// 多个API节点可能同时为同一个第三方身份注册 唯一索引冲突的一方
 	// 回滚自己创建的账号，再读取成功一方已经提交的UID
-	uid, found, findErr := s.findIdentity(ctx, loginType, loginIdentity.AppID, loginIdentity.OpenID)
+	uid, found, findErr := s.FindLoginRecord(ctx, loginType, loginIdentity.AppID, loginIdentity.OpenID)
 	if findErr != nil {
 		return 0, false, findErr
 	}
@@ -78,7 +78,7 @@ func (s *Store) FindOrCrateAccount(ctx context.Context, loginType loginTypes.Log
 	return uid, false, nil
 }
 
-func (s *Store) findIdentity(ctx context.Context, loginType loginTypes.LoginType, appID, openID string) (uint64, bool, error) {
+func (s *Store) FindLoginRecord(ctx context.Context, loginType loginTypes.LoginType, appID, openID string) (uint64, bool, error) {
 	only, err := s.client.Identity.Query().Where(
 		identity.LoginTypeEQ(int32(loginType)),
 		identity.AppIDEQ(appID),

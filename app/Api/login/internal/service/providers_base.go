@@ -30,3 +30,11 @@ func (p *BaseLoginProvider) FindLoginRecord(ctx context.Context, appID, openID s
 func (p *BaseLoginProvider) FindOrCreateAccount(ctx context.Context, identity loginTypes.Identity) (uid uint64, registered bool, err error) {
 	return p.store.FindOrCreateAccount(ctx, p.loginType, identity)
 }
+
+func (p *BaseLoginProvider) BindAccount(ctx context.Context, uid uint64, identity loginTypes.Identity) error {
+	return p.store.BindIdentity(ctx, uid, p.loginType, identity)
+}
+
+func (p *BaseLoginProvider) UnbindAccount(ctx context.Context, uid uint64, identity loginTypes.Identity) error {
+	return p.store.UnbindIdentity(ctx, uid, p.loginType, identity)
+}

@@ -7,12 +7,19 @@ import (
 
 	entsql "entgo.io/ent/dialect/sql"
 	loginent "github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent"
+	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/account"
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/identity"
 	loginTypes "github.com/2comjie/taoxi-server/app/Api/login/types"
 	"github.com/2comjie/wali/logx"
 )
 
-var ErrAccountDeleted = errors.New("login: 账号已注销")
+var (
+	ErrAccountDeleted            = errors.New("login: 账号已注销")
+	ErrIdentityBoundOtherAccount = errors.New("login: 第三方账号已绑定其他玩家")
+	ErrLoginTypeAlreadyBound     = errors.New("login: 当前账号已绑定该登录方式")
+	ErrIdentityNotBound          = errors.New("login: 当前账号未绑定该第三方账号")
+	ErrLastIdentity              = errors.New("login: 不能取消最后一种登录方式")
+)
 
 type Store struct {
 	client *loginent.Client
@@ -91,6 +98,174 @@ func (s *Store) FindLoginRecord(ctx context.Context, loginType loginTypes.LoginT
 		return 0, false, fmt.Errorf("login: 查询登录身份失败: %w", err)
 	}
 	return only.UID, true, nil
+}
+
+func (s *Store) BindIdentity(ctx context.Context, uid uint64, loginType loginTypes.LoginType, loginIdentity loginTypes.Identity) error {
+	tx, err := s.client.Tx(ctx)
+	if err != nil {
+		return fmt.Errorf("login: 开启绑定登录身份事务失败: %w", err)
+	}
+	rollback := func() {
+		_ = tx.Rollback()
+	}
+
+	if err = lockActiveAccount(ctx, tx, uid); err != nil {
+		rollback()
+		return err
+	}
+
+	boundIdentity, err := tx.Identity.Query().Where(
+		identity.LoginTypeEQ(int32(loginType)),
+		identity.AppIDEQ(loginIdentity.AppID),
+		identity.OpenIDEQ(loginIdentity.OpenID),
+	).Only(ctx)
+	switch {
+	case err == nil && boundIdentity.UID == uid:
+		if err = tx.Commit(); err != nil {
+			rollback()
+			return fmt.Errorf("login: 提交绑定登录身份事务失败: %w", err)
+		}
+		return nil
+	case err == nil:
+		rollback()
+		return ErrIdentityBoundOtherAccount
+	case !loginent.IsNotFound(err):
+		rollback()
+		return fmt.Errorf("login: 查询第三方账号绑定失败: %w", err)
+	}
+
+	alreadyBound, err := tx.Identity.Query().Where(
+		identity.UIDEQ(uid),
+		identity.LoginTypeEQ(int32(loginType)),
+		identity.AppIDEQ(loginIdentity.AppID),
+	).Exist(ctx)
+	if err != nil {
+		rollback()
+		return fmt.Errorf("login: 查询玩家登录方式失败: %w", err)
+	}
+	if alreadyBound {
+		rollback()
+		return ErrLoginTypeAlreadyBound
+	}
+
+	createIdentity := tx.Identity.Create().
+		SetUID(uid).
+		SetLoginType(int32(loginType)).
+		SetAppID(loginIdentity.AppID).
+		SetOpenID(loginIdentity.OpenID)
+	if loginIdentity.UnionID != "" {
+		createIdentity.SetUnionID(loginIdentity.UnionID)
+	}
+	if _, err = createIdentity.Save(ctx); err != nil {
+		rollback()
+		if loginent.IsConstraintError(err) {
+			return fmt.Errorf("%w: %v", ErrIdentityBoundOtherAccount, err)
+		}
+		return fmt.Errorf("login: 创建登录身份失败: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		rollback()
+		return fmt.Errorf("login: 提交绑定登录身份事务失败: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) UnbindIdentity(ctx context.Context, uid uint64, loginType loginTypes.LoginType, loginIdentity loginTypes.Identity) error {
+	tx, err := s.client.Tx(ctx)
+	if err != nil {
+		return fmt.Errorf("login: 开启取消绑定事务失败: %w", err)
+	}
+	rollback := func() {
+		_ = tx.Rollback()
+	}
+
+	if err = lockActiveAccount(ctx, tx, uid); err != nil {
+		rollback()
+		return err
+	}
+
+	boundIdentity, err := tx.Identity.Query().Where(
+		identity.LoginTypeEQ(int32(loginType)),
+		identity.AppIDEQ(loginIdentity.AppID),
+		identity.OpenIDEQ(loginIdentity.OpenID),
+	).Only(ctx)
+	if loginent.IsNotFound(err) || err == nil && boundIdentity.UID != uid {
+		rollback()
+		return ErrIdentityNotBound
+	}
+	if err != nil {
+		rollback()
+		return fmt.Errorf("login: 查询取消绑定的登录身份失败: %w", err)
+	}
+
+	identityCount, err := tx.Identity.Query().Where(identity.UIDEQ(uid)).Count(ctx)
+	if err != nil {
+		rollback()
+		return fmt.Errorf("login: 统计玩家登录方式失败: %w", err)
+	}
+	if identityCount <= 1 {
+		rollback()
+		return ErrLastIdentity
+	}
+
+	if err = tx.Identity.DeleteOneID(boundIdentity.ID).Exec(ctx); err != nil {
+		rollback()
+		return fmt.Errorf("login: 删除登录身份失败: %w", err)
+	}
+	if err = tx.Commit(); err != nil {
+		rollback()
+		return fmt.Errorf("login: 提交取消绑定事务失败: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) DeleteAccount(ctx context.Context, uid uint64) error {
+	tx, err := s.client.Tx(ctx)
+	if err != nil {
+		return fmt.Errorf("login: 开启注销账号事务失败: %w", err)
+	}
+	rollback := func() {
+		_ = tx.Rollback()
+	}
+
+	affected, err := tx.Account.Update().Where(
+		account.IDEQ(uid),
+		account.IsDeletedEQ(false),
+	).SetIsDeleted(true).Save(ctx)
+	if err != nil {
+		rollback()
+		return fmt.Errorf("login: 标记账号已注销失败: %w", err)
+	}
+	if affected == 0 {
+		rollback()
+		return ErrAccountDeleted
+	}
+
+	if _, err = tx.Identity.Delete().Where(identity.UIDEQ(uid)).Exec(ctx); err != nil {
+		rollback()
+		return fmt.Errorf("login: 删除账号的登录身份失败: %w", err)
+	}
+	if err = tx.Commit(); err != nil {
+		rollback()
+		return fmt.Errorf("login: 提交注销账号事务失败: %w", err)
+	}
+	return nil
+}
+
+func lockActiveAccount(ctx context.Context, tx *loginent.Tx, uid uint64) error {
+	// FOR UPDATE 会在事务内锁住账号行，使同一玩家的绑定、解绑和注销串行
+	accountData, err := tx.Account.Query().Where(account.IDEQ(uid)).ForUpdate().Only(ctx)
+	if loginent.IsNotFound(err) {
+		return ErrAccountDeleted
+	}
+	if err != nil {
+		return fmt.Errorf("login: 锁定账号失败: %w", err)
+	}
+	if accountData.IsDeleted {
+		return ErrAccountDeleted
+	}
+	return nil
 }
 
 func (s *Store) checkAccount(ctx context.Context, uid uint64) error {

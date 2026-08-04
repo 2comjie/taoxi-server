@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package taoxi.test;
+
+option go_package = "github.com/2comjie/taoxi-server/pb/test;test";
+
+message Test {
+  string name = 1;
+}

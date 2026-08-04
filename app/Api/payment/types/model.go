@@ -1,6 +1,9 @@
 package paymentTypes
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 type OrderStatus int32
 
@@ -36,6 +39,18 @@ type BuildCreateOrderParams struct {
 	ProductId           int32  // 商品ID
 	ThirdPartyProductId string // 第三方的商品ID
 }
+
+type CreateOrderParams struct {
+	Uid                 uint64
+	ProductId           int32
+	ThirdPartyProductId string
+	PaymentType         PaymentType
+	AmountUnit          int64
+	AmountNanos         int32
+	Currency            string
+	Rewards             json.RawMessage
+}
+
 type CreateOrderExtra struct {
 	// Apple
 	AppAccountToken string `json:"app_account_token,omitempty"`
@@ -77,3 +92,11 @@ type ThirdPartyOrder struct {
 
 	IsSandbox bool
 }
+
+type OrderProcessResult int32
+
+const (
+	OrderProcessWaiting   OrderProcessResult = 0
+	OrderProcessPurchased OrderProcessResult = 1
+	OrderProcessCancelled OrderProcessResult = 2
+)

@@ -48,7 +48,7 @@ func stdHandler[Req any, Rsp any](handler StdFunc[Req, Rsp], checkUID bool) gin.
 				c.Abort()
 				return
 			}
-			header.UID = uid
+			header.Uid = uid
 		}
 		var req Req
 		err := c.ShouldBind(&req)

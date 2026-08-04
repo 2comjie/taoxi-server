@@ -53,7 +53,7 @@ type RawHeader struct {
 
 type Header struct {
 	RawHeader
-	UID           uint64        `json:"-" form:"-" header:"-" bson:"-"`
+	Uid           uint64        `json:"-" form:"-" header:"-" bson:"-"`
 	Body          string        `json:"body" form:"body" header:"-" bson:"-"`
 	RequestFormat RequestFormat `json:"-" form:"-" header:"-" bson:"request_format"`
 	ctx           context.Context

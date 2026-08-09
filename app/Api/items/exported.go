@@ -5,4 +5,5 @@ import (
 )
 
 var AddItem = service.AddItem
+var AddItems = service.AddItems
 var GetItemWithCache = service.GetItemWithCache

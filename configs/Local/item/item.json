@@ -1,0 +1,52 @@
+{
+  "1": {
+    "item_type_id": 1,
+    "item_system_id": 0,
+    "level": 1,
+    "name": "金币",
+    "desc": "基础游戏货币",
+    "stack_mode": 0,
+    "stack_cnt": -1,
+    "extra_args": ""
+  },
+  "2": {
+    "item_type_id": 2,
+    "item_system_id": 0,
+    "level": 1,
+    "name": "钻石",
+    "desc": "高级游戏货币",
+    "stack_mode": 0,
+    "stack_cnt": -1,
+    "extra_args": ""
+  },
+  "100001": {
+    "item_type_id": 100001,
+    "item_system_id": 1,
+    "level": 1,
+    "name": "小麦种子",
+    "desc": "用于种植小麦",
+    "stack_mode": 0,
+    "stack_cnt": -1,
+    "extra_args": ""
+  },
+  "100002": {
+    "item_type_id": 100002,
+    "item_system_id": 1,
+    "level": 1,
+    "name": "玉米种子",
+    "desc": "用于种植玉米",
+    "stack_mode": 0,
+    "stack_cnt": -1,
+    "extra_args": ""
+  },
+  "100003": {
+    "item_type_id": 100003,
+    "item_system_id": 1,
+    "level": 1,
+    "name": "胡萝卜种子",
+    "desc": "用于种植胡萝卜",
+    "stack_mode": 0,
+    "stack_cnt": -1,
+    "extra_args": ""
+  }
+}

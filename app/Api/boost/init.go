@@ -3,6 +3,7 @@ package apiBoost
 import (
 	"context"
 	"errors"
+	"github.com/2comjie/taoxi-server/app/Api/items"
 	"net"
 	"net/http"
 
@@ -102,6 +103,7 @@ func Init() {
 	nodeDeploy.Init(deploy.WithComponents(webComponent, cronComponent, asynqServer))
 
 	login.Init(args)
+	items.Init(args)
 	payment.Init(args)
 
 	err := nodeDeploy.App().Run()

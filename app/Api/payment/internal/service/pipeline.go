@@ -2,6 +2,9 @@ package paymentService
 
 import (
 	"context"
+	"encoding/json"
+	paymentConfig "github.com/2comjie/taoxi-server/internal/config/payment"
+	"github.com/2comjie/taoxi-server/pkg/asynqx"
 
 	paymentStore "github.com/2comjie/taoxi-server/app/Api/payment/internal/store"
 	paymentent "github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent"
@@ -37,12 +40,7 @@ func purchaseOrderWithoutLock(logCtx logdef.ILogger, ctx context.Context, channe
 }
 
 // cancelOrderWithoutLock 执行未发货订单的取消流水线。
-func cancelOrderWithoutLock(
-	logCtx logdef.ILogger,
-	ctx context.Context,
-	order *paymentent.PaymentOrder,
-	thirdPartyOrder *paymentTypes.ThirdPartyOrder,
-) (paymentTypes.OrderProcessResult, *stderr.Error) {
+func cancelOrderWithoutLock(logCtx logdef.ILogger, ctx context.Context, order *paymentent.PaymentOrder, thirdPartyOrder *paymentTypes.ThirdPartyOrder) (paymentTypes.OrderProcessResult, *stderr.Error) {
 	logCtx.Warnf("支付订单取消流水线暂未实现 order_id=%d", order.ID)
 	return paymentTypes.OrderProcessWaiting, stderr.InternalServerError("支付订单取消服务暂未就绪")
 }
@@ -65,8 +63,37 @@ func revokeOrderWithoutLock(
 
 // stepGrantRewards 幂等发放订单奖励
 func stepGrantRewards(logCtx logdef.ILogger, ctx context.Context, order *paymentent.PaymentOrder) *stderr.Error {
-	logCtx.Warnf("支付发奖步骤暂未实现 order_id=%d", order.ID)
+	logCtx.Infof("开始发货")
 
+	product := paymentConfig.GetProduct(order.ProductID)
+	if product == nil {
+		logCtx.Errorf("发货失败 商品配置不存在 product_id=%d", order.ProductID)
+		return stderr.InternalServerError("商品配置不存在")
+	}
+
+	rewards, err := json.Marshal(product.Rewards)
+	if err != nil {
+		logCtx.Errorf("发货失败 序列化奖励错误 err=%v", err)
+		return stderr.InternalServerError("序列化奖励失败")
+	}
+
+	logCtx.Infof("更新订单奖励快照 rewards=%s", string(rewards))
+	if err = paymentStore.UpdateOrderRewards(ctx, order.ID, rewards); err != nil {
+		logCtx.Errorf("发货失败 更新奖励快照错误 err=%v", err)
+		return stderr.InternalServerError("更新奖励快照失败")
+	}
+
+	logCtx.Infof("提交发货任务")
+	if err = asynqx.Enqueue(ctx, &paymentTypes.GrantTask{
+		OrderId: order.ID,
+		Uid:     order.UID,
+		Rewards: rewards,
+	}); err != nil {
+		logCtx.Errorf("提交发货任务失败 err=%v", err)
+		return stderr.InternalServerError("提交发货任务失败")
+	}
+
+	logCtx.Infof("发货任务提交成功")
 	return nil
 }
 
@@ -81,13 +108,8 @@ func stepRevokeRewards(
 	return stderr.InternalServerError("支付奖励回收服务暂未就绪")
 }
 
-// stepComplete 完成第三方订单。Google执行Consume，Apple通常直接返回nil。
-func stepComplete(
-	logCtx logdef.ILogger,
-	ctx context.Context,
-	channel PaymentChannel,
-	thirdPartyOrder *paymentTypes.ThirdPartyOrder,
-) *stderr.Error {
+// stepComplete 完成第三方订单。Google执行Consume，Apple通常直接返回nil
+func stepComplete(logCtx logdef.ILogger, ctx context.Context, channel PaymentChannel, thirdPartyOrder *paymentTypes.ThirdPartyOrder) *stderr.Error {
 	if err := channel.Complete(ctx, thirdPartyOrder); err != nil {
 		logCtx.Errorf("完成第三方订单失败 err=%v", err)
 		return stderr.InternalServerError("完成第三方订单失败")

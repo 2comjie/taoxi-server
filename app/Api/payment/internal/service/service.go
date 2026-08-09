@@ -3,6 +3,7 @@ package paymentService
 import (
 	"context"
 	"encoding/json"
+	"github.com/2comjie/taoxi-server/pkg/asynqx"
 
 	paymentStore "github.com/2comjie/taoxi-server/app/Api/payment/internal/store"
 	paymentent "github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent"
@@ -19,11 +20,12 @@ const (
 	defaultCurrency = "CNY"
 )
 
-func Init(client redis.UniversalClient) {
+func Init(client redis.UniversalClient, server *asynqx.Server) {
 	if client == nil {
 		panic("payment: Redis客户端不能为空")
 	}
 	redisClient = client
+	RegisterTasks(server)
 }
 
 // CreateOrderWithoutLock 不获取玩家支付锁，调用方必须已经持有该玩家的支付锁

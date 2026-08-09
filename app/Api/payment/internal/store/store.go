@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -150,6 +151,14 @@ func AddRetryTimes(ctx context.Context, orderId uint64) error {
 	).AddRetryTimes(1).Save(ctx)
 	if err != nil {
 		return fmt.Errorf("payment: 增加订单重试次数失败: %w", err)
+	}
+	return nil
+}
+
+func UpdateOrderRewards(ctx context.Context, orderId uint64, rewards json.RawMessage) error {
+	_, err := EntClient.PaymentOrder.UpdateOneID(orderId).SetRewards(rewards).Save(ctx)
+	if err != nil {
+		return err
 	}
 	return nil
 }

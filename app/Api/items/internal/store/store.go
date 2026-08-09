@@ -8,7 +8,9 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	itement "github.com/2comjie/taoxi-server/app/Api/items/internal/store/ent"
 	"github.com/2comjie/taoxi-server/app/Api/items/internal/store/ent/item"
-	sharedItem "github.com/2comjie/taoxi-server/internal/shared/item"
+	itemTypes "github.com/2comjie/taoxi-server/app/Api/items/types"
+	"github.com/2comjie/taoxi-server/internal/config/items"
+	"github.com/2comjie/taoxi-server/internal/config/shared"
 )
 
 var EntClient *itement.Client
@@ -59,7 +61,7 @@ func availablePredicate() func(*entsql.Selector) {
 	}
 }
 
-func AddItem(ctx context.Context, uid uint64, stackMode sharedItem.StackMode, itemTypeId int32, count int64, expireAt time.Time) (int64, error) {
+func AddItem(ctx context.Context, uid uint64, stackMode items.StackMode, itemTypeId items.ItemTypeId, count int64, expireAt time.Time) (int64, error) {
 	tx, err := EntClient.Tx(ctx)
 	if err != nil {
 		return 0, err
@@ -77,7 +79,7 @@ func AddItem(ctx context.Context, uid uint64, stackMode sharedItem.StackMode, it
 	}
 
 	var ret int64
-	if stackMode == sharedItem.StackModeTime {
+	if stackMode == items.StackModeTime {
 		ret, err = addItemTimeStackInTx(ctx, tx, uid, itemTypeId, count, expireAt)
 	} else {
 		ret, err = addItemUnlimitedInTx(ctx, tx, uid, itemTypeId, count, expireAt)
@@ -103,7 +105,7 @@ func lockUID(ctx context.Context, tx *itement.Tx, uid uint64) error {
 		Exec(ctx)
 }
 
-func addItemTimeStackInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemTypeId int32, count int64, expireAt time.Time) (int64, error) {
+func addItemTimeStackInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemTypeId items.ItemTypeId, count int64, expireAt time.Time) (int64, error) {
 	if count <= 0 {
 		return 0, nil
 	}
@@ -130,7 +132,7 @@ func addItemTimeStackInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemT
 	rows, err := tx.Item.Query().
 		Where(
 			item.UID(uid),
-			item.ItemIDEQ(itemTypeId),
+			item.ItemIDEQ(int32(itemTypeId)),
 			item.ExpireAtUnixGT(now),
 		).
 		Order(func(s *entsql.Selector) {
@@ -163,7 +165,7 @@ func addItemTimeStackInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemT
 	if len(rows) == 0 {
 		err = tx.Item.Create().
 			SetUID(uid).
-			SetItemID(itemTypeId).
+			SetItemID(int32(itemTypeId)).
 			SetCount(1).
 			SetUsedCount(0).
 			SetExpireAtUnix(newExpireAtUnix).
@@ -199,7 +201,7 @@ func addItemTimeStackInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemT
 	return 1, nil
 }
 
-func addItemUnlimitedInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemTypeId int32, count int64, expireAt time.Time) (int64, error) {
+func addItemUnlimitedInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemTypeId items.ItemTypeId, count int64, expireAt time.Time) (int64, error) {
 	if count <= 0 {
 		return 0, nil
 	}
@@ -213,7 +215,7 @@ func addItemUnlimitedInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemT
 	existing, err := tx.Item.Query().
 		Where(
 			item.UID(uid),
-			item.ItemIDEQ(itemTypeId),
+			item.ItemIDEQ(int32(itemTypeId)),
 			item.ExpireAtUnixEQ(expireAtUnix),
 		).
 		First(ctx)
@@ -224,7 +226,7 @@ func addItemUnlimitedInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemT
 	if existing == nil {
 		err = tx.Item.Create().
 			SetUID(uid).
-			SetItemID(itemTypeId).
+			SetItemID(int32(itemTypeId)).
 			SetCount(count).
 			SetUsedCount(0).
 			SetExpireAtUnix(expireAtUnix).
@@ -246,4 +248,74 @@ func addItemUnlimitedInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemT
 	}
 
 	return existing.Count + count - existing.UsedCount, nil
+}
+
+func AddItems(ctx context.Context, uid uint64, nonce string, rewards []*shared.Reward) error {
+	tx, err := EntClient.Tx(ctx)
+	if err != nil {
+		return err
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if err = lockUID(ctx, tx, uid); err != nil {
+		return err
+	}
+
+	// nonce 和奖励在同一个事务内提交。
+	err = tx.ItemNonce.Create().
+		SetUID(uid).
+		SetNonce(nonce).
+		SetOpType(itemTypes.OperationTypeGrant).
+		Exec(ctx)
+	if err != nil {
+		// nonce 已存在，说明之前已经成功发放。
+		if itement.IsConstraintError(err) {
+			return nil
+		}
+		return err
+	}
+
+	now := time.Now()
+	for _, reward := range rewards {
+		if reward == nil {
+			return fmt.Errorf("items: 奖励不能为空")
+		}
+
+		itemConfig := items.GetItem(reward.ItemTypeId)
+		if itemConfig == nil {
+			return fmt.Errorf("items: 道具配置不存在 item_type_id=%d", reward.ItemTypeId)
+		}
+
+		var expireAt time.Time
+		if reward.ExpireTimeUnix > 0 {
+			expireAt = time.Unix(reward.ExpireTimeUnix, 0)
+		} else if reward.ExpireDurationSec > 0 {
+			expireAt = now.Add(time.Duration(reward.ExpireDurationSec) * time.Second)
+		}
+
+		switch itemConfig.StackMode {
+		case items.StackModeTime:
+			_, err = addItemTimeStackInTx(ctx, tx, uid, reward.ItemTypeId, int64(reward.Count), expireAt)
+		case items.StackModeCount:
+			_, err = addItemUnlimitedInTx(ctx, tx, uid, reward.ItemTypeId, int64(reward.Count), expireAt)
+		default:
+			return fmt.Errorf("items: 未知堆叠类型 item_type_id=%d stack_mode=%d", reward.ItemTypeId, itemConfig.StackMode)
+		}
+		if err != nil {
+			return fmt.Errorf("items: 发放道具失败 item_type_id=%d: %w", reward.ItemTypeId, err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	committed = true
+	return nil
 }

@@ -1,8 +1,6 @@
 package payment
 
 import (
-	"fmt"
-
 	paymentCron "github.com/2comjie/taoxi-server/app/Api/payment/internal/cron"
 	"github.com/2comjie/taoxi-server/app/Api/payment/internal/router"
 	paymentService "github.com/2comjie/taoxi-server/app/Api/payment/internal/service"
@@ -15,11 +13,11 @@ import (
 
 func Init(args modules.Modules) {
 	if err := paymentConfig.Init(nodeDeploy.App().Config()); err != nil {
-		panic(fmt.Errorf("payment: 初始化商品配置失败: %w", err))
+		panic(err)
 	}
 
 	paymentStore.Init(external.MysqlUser())
-	paymentService.Init(external.RedisPayment())
+	paymentService.Init(external.RedisPayment(), args.AsynqServer)
 	paymentCron.Init(args.Cron)
 	router.Init(args)
 }

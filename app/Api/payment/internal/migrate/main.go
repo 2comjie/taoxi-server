@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent"
+	"github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent"
 	_ "github.com/go-sql-driver/mysql"
 )
 

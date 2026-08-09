@@ -74,8 +74,9 @@ type ThirdPartyOrder struct {
 	Status ThirdPartyOrderStatus
 
 	// 内部订单定位信息
-	InternalOrderId uint64
-	Uid             uint64
+	InternalOrderId   uint64
+	InternalProductId int32
+	Uid               uint64
 
 	// 第三方订单号 (如 Google 的 GPA.xxx)
 	OrderId    string
@@ -91,6 +92,7 @@ type ThirdPartyOrder struct {
 	RefundReason string
 
 	IsSandbox bool
+	Consumed  bool
 }
 
 type OrderProcessResult int32

@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	cronProcessTimeout = 30 * time.Second
+	cronProcessTimeout       = 30 * time.Second
+	googleRTDNProcessTimeout = 25 * time.Second
 )
 
 func Init(systemCron *robfigCron.Cron) {
@@ -22,6 +23,21 @@ func Init(systemCron *robfigCron.Cron) {
 	if err != nil {
 		panic("payment cron: 注册超时订单任务失败: " + err.Error())
 	}
+	_, err = systemCron.AddFunc("@every 30s", checkGoogleRTDN)
+	if err != nil {
+		panic("payment cron: 注册Google RTDN任务失败: " + err.Error())
+	}
+}
+
+func checkGoogleRTDN() {
+	help.SafeRun(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), googleRTDNProcessTimeout)
+		defer cancel()
+
+		if err := paymentService.CheckGoogleRTDN(ctx); err != nil {
+			logx.Errorf("payment cron: 处理Google RTDN失败 err=%v", err)
+		}
+	})
 }
 
 func checkExpiredPendingOrders() {

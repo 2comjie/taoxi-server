@@ -3,6 +3,7 @@ package paymentService
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/2comjie/taoxi-server/pkg/asynqx"
 
 	paymentStore "github.com/2comjie/taoxi-server/app/Api/payment/internal/store"
@@ -26,6 +27,9 @@ func Init(client redis.UniversalClient, server *asynqx.Server) {
 	}
 	redisClient = client
 	RegisterTasks(server)
+	if err := InitGoogleChannel(context.Background()); err != nil {
+		panic(err)
+	}
 }
 
 // CreateOrderWithoutLock 不获取玩家支付锁，调用方必须已经持有该玩家的支付锁

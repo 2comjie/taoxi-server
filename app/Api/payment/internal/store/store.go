@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -9,6 +10,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	paymentent "github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent"
 	"github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent/paymentorder"
+	"github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent/predicate"
 	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
 )
 
@@ -61,6 +63,56 @@ func CreateOrder(ctx context.Context, params *paymentTypes.CreateOrderParams) (*
 	order, err := builder.Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("payment: 创建订单失败: %w", err)
+	}
+	return order, nil
+}
+
+func FindAndBindOrder(ctx context.Context, uid uint64, paymentType paymentTypes.PaymentType, orderId uint64, productId int32, credential string, thirdPartyOrderId string) (*paymentent.PaymentOrder, error) {
+	if credential == "" {
+		return nil, fmt.Errorf("payment: 支付凭证不能为空")
+	}
+
+	credentialHash := fmt.Sprintf("%x", sha256.Sum256([]byte(credential)))
+	predicates := []predicate.PaymentOrder{
+		paymentorder.IDEQ(orderId),
+		paymentorder.UIDEQ(uid),
+		paymentorder.PaymentTypeEQ(paymentType),
+		paymentorder.ProductIDEQ(productId),
+		paymentorder.Or(
+			paymentorder.CredentialHashIsNil(),
+			paymentorder.CredentialHashEQ(credentialHash),
+		),
+	}
+	if thirdPartyOrderId != "" {
+		predicates = append(predicates, paymentorder.Or(
+			paymentorder.ThirdPartyOrderIDIsNil(),
+			paymentorder.ThirdPartyOrderIDEQ(thirdPartyOrderId),
+		))
+	}
+
+	update := EntClient.PaymentOrder.Update().
+		Where(predicates...).
+		SetCredential(credential).
+		SetCredentialHash(credentialHash)
+	if thirdPartyOrderId != "" {
+		update.SetThirdPartyOrderID(thirdPartyOrderId)
+	}
+
+	_, err := update.Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("payment: 绑定第三方订单失败: %w", err)
+	}
+
+	order, err := EntClient.PaymentOrder.Get(ctx, orderId)
+	if err != nil {
+		return nil, fmt.Errorf("payment: 查询已绑定订单失败: %w", err)
+	}
+	if order.UID != uid || order.PaymentType != paymentType || order.ProductID != productId ||
+		order.CredentialHash == nil || *order.CredentialHash != credentialHash {
+		return nil, fmt.Errorf("payment: 内部订单不存在、归属不匹配或已绑定其他支付凭证")
+	}
+	if thirdPartyOrderId != "" && (order.ThirdPartyOrderID == nil || *order.ThirdPartyOrderID != thirdPartyOrderId) {
+		return nil, fmt.Errorf("payment: 内部订单已绑定其他第三方订单")
 	}
 	return order, nil
 }

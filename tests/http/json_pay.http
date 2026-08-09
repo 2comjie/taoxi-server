@@ -1,0 +1,35 @@
+### 登录并保存支付接口需要的 access token
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+format: 1
+lang: zh-CN
+
+{
+  "login_type": 1,
+  "guest_id": "json-pay-{{uid}}"
+}
+
+### 创建 Google Play 订单
+POST {{baseUrl}}/api/payment/create_order
+Content-Type: application/json
+format: 1
+lang: zh-CN
+token: {{accessToken}}
+
+{
+  "product_id": 1001,
+  "payment_type": 2
+}
+
+### 上传 Google Play purchaseToken
+# 将 googlePurchaseToken 替换为客户端购买成功后返回的 purchaseToken
+POST {{baseUrl}}/api/payment/upload_receipt
+Content-Type: application/json
+format: 1
+lang: zh-CN
+token: {{accessToken}}
+
+{
+  "payment_type": 2,
+  "credential": "{{googlePurchaseToken}}"
+}

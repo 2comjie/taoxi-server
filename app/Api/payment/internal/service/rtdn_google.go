@@ -15,8 +15,8 @@ import (
 	"google.golang.org/api/pubsub/v1"
 )
 
-const googleRTDNPullMaxMessages int64 = 100
-
+// Google Play RTDN DeveloperNotification：
+// https://developer.android.com/google/play/billing/rtdn-reference#developernotification
 type googleDeveloperNotification struct {
 	PackageName                string                            `json:"packageName"`
 	OneTimeProductNotification *googleOneTimeProductNotification `json:"oneTimeProductNotification"`
@@ -33,7 +33,6 @@ type googleVoidedPurchaseNotification struct {
 	ProductType   int32  `json:"productType"`
 }
 
-// CheckGoogleRTDN 处理成功才 Ack，失败由 Pub/Sub 重新投递。
 func CheckGoogleRTDN(ctx context.Context) error {
 	registered, exists := GetChannel(paymentTypes.PaymentTypeGoogle)
 	if !exists {
@@ -46,7 +45,7 @@ func CheckGoogleRTDN(ctx context.Context) error {
 
 	response, err := channel.pubsub.Projects.Subscriptions.Pull(
 		channel.subscription,
-		&pubsub.PullRequest{MaxMessages: googleRTDNPullMaxMessages, ReturnImmediately: true},
+		&pubsub.PullRequest{MaxMessages: 100, ReturnImmediately: true},
 	).Context(ctx).Do()
 	if err != nil {
 		return fmt.Errorf("拉取Google Play RTDN失败: %w", err)

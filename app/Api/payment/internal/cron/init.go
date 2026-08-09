@@ -10,11 +10,6 @@ import (
 	robfigCron "github.com/robfig/cron/v3"
 )
 
-const (
-	cronProcessTimeout       = 30 * time.Second
-	googleRTDNProcessTimeout = 25 * time.Second
-)
-
 func Init(systemCron *robfigCron.Cron) {
 	if systemCron == nil {
 		panic("payment cron: Cron不能为空")
@@ -31,7 +26,7 @@ func Init(systemCron *robfigCron.Cron) {
 
 func checkGoogleRTDN() {
 	help.SafeRun(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), googleRTDNProcessTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 		defer cancel()
 
 		if err := paymentService.CheckGoogleRTDN(ctx); err != nil {
@@ -42,7 +37,7 @@ func checkGoogleRTDN() {
 
 func checkExpiredPendingOrders() {
 	help.SafeRun(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), cronProcessTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
 		if stdErr := paymentService.CheckExpiredPendingOrders(ctx); stdErr != nil {

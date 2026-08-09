@@ -16,6 +16,29 @@ import (
 
 func RegisterTasks(server *asynqx.Server) {
 	asynqx.RegisterTaskType[*paymentTypes.GrantTask](server, &paymentTypes.GrantTask{}, processGrantTask, grantTaskRetryDelay)
+	asynqx.RegisterTaskType[*paymentTypes.RevokeTask](server, &paymentTypes.RevokeTask{}, processRevokeTask, revokeTaskRetryDelay)
+}
+
+func processRevokeTask(ctx context.Context, task *paymentTypes.RevokeTask, _ *hibikenAsynq.Task) error {
+	logCtx := logx.WithField("action", "支付退款奖励回收任务").WithField("order_id", task.OrderId).WithField("uid", task.Uid)
+	rewards := make([]*shared.Reward, 0)
+	if len(task.Rewards) > 0 {
+		if err := json.Unmarshal(task.Rewards, &rewards); err != nil {
+			logCtx.Errorf("解析奖励错误 %v %s", err, task.Rewards)
+			return err
+		}
+	}
+
+	grantNonce := fmt.Sprintf("订单发货-%d", task.OrderId)
+	revokeNonce := fmt.Sprintf("订单退款-%d", task.OrderId)
+	stdErr := items.RevokeItems(ctx, task.Uid, grantNonce, revokeNonce, rewards)
+	if stdErr != nil {
+		logCtx.Errorf("回收道具失败 %v %s", stdErr, task.Rewards)
+		return errors.New(stdErr.Msg)
+	}
+
+	logCtx.Infof("道具回收成功 %d %s", task.Uid, task.Rewards)
+	return nil
 }
 
 func processGrantTask(ctx context.Context, task *paymentTypes.GrantTask, _ *hibikenAsynq.Task) error {
@@ -40,6 +63,14 @@ func processGrantTask(ctx context.Context, task *paymentTypes.GrantTask, _ *hibi
 }
 
 func grantTaskRetryDelay(retryCount int, err error, _ *paymentTypes.GrantTask, rawTask *hibikenAsynq.Task) time.Duration {
+	delay := hibikenAsynq.DefaultRetryDelayFunc(retryCount, err, rawTask)
+	if delay > 5*time.Minute {
+		return 5 * time.Minute
+	}
+	return delay
+}
+
+func revokeTaskRetryDelay(retryCount int, err error, _ *paymentTypes.RevokeTask, rawTask *hibikenAsynq.Task) time.Duration {
 	delay := hibikenAsynq.DefaultRetryDelayFunc(retryCount, err, rawTask)
 	if delay > 5*time.Minute {
 		return 5 * time.Minute

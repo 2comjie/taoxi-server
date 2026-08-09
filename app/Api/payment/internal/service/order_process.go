@@ -20,7 +20,6 @@ import (
 //Cancelled	Purchased	仅 timeout 订单允许恢复发奖
 //Cancelled	Cancelled	幂等成功
 
-// ProcessOrderWithoutLock 根据内部订单状态和第三方订单状态执行支付流水线。
 func ProcessOrderWithoutLock(logCtx logdef.ILogger, ctx context.Context, channel PaymentChannel, order *paymentent.PaymentOrder, thirdPartyOrder *paymentTypes.ThirdPartyOrder) (paymentTypes.OrderProcessResult, *stderr.Error) {
 	logCtx = logCtx.
 		WithField("order_id", order.ID).

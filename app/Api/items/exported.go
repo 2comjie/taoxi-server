@@ -6,4 +6,5 @@ import (
 
 var AddItem = service.AddItem
 var AddItems = service.AddItems
+var RevokeItems = service.RevokeItems
 var GetItemWithCache = service.GetItemWithCache

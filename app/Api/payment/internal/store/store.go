@@ -145,6 +145,69 @@ func MarkOrderPurchased(ctx context.Context, orderId uint64, thirdPartyOrder *pa
 	return nil
 }
 
+func MarkOrderRefunded(ctx context.Context, orderId uint64, thirdPartyOrder *paymentTypes.ThirdPartyOrder) error {
+	refundAtUnix := thirdPartyOrder.RefundAtUnix
+	if refundAtUnix <= 0 {
+		refundAtUnix = time.Now().Unix()
+	}
+	refundReason := thirdPartyOrder.RefundReason
+	if refundReason == "" {
+		refundReason = paymentTypes.CancelReasonRefund
+	}
+
+	affected, err := EntClient.PaymentOrder.Update().
+		Where(
+			paymentorder.IDEQ(orderId),
+			paymentorder.StatusEQ(paymentTypes.OrderStatusPurchased),
+		).
+		SetStatus(paymentTypes.OrderStatusCancelled).
+		SetCancelReason(paymentTypes.CancelReasonRefund).
+		SetRefundReason(refundReason).
+		SetRefundAtUnix(refundAtUnix).
+		SetCancelAtUnix(refundAtUnix).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("payment: 更新订单退款状态失败: %w", err)
+	}
+	if affected == 0 {
+		return fmt.Errorf("payment: 更新订单退款状态失败: 订单不存在或状态已改变")
+	}
+	return nil
+}
+
+func MarkOrderCancelled(ctx context.Context, orderId uint64, thirdPartyOrder *paymentTypes.ThirdPartyOrder) error {
+	cancelAtUnix := time.Now().Unix()
+	if thirdPartyOrder.RefundAtUnix > 0 {
+		cancelAtUnix = thirdPartyOrder.RefundAtUnix
+	}
+
+	builder := EntClient.PaymentOrder.Update().
+		Where(
+			paymentorder.IDEQ(orderId),
+			paymentorder.StatusEQ(paymentTypes.OrderStatusPending),
+		).
+		SetStatus(paymentTypes.OrderStatusCancelled).
+		SetCancelReason(paymentTypes.CancelReasonRefund).
+		SetCancelAtUnix(cancelAtUnix)
+
+	if thirdPartyOrder.RefundAtUnix > 0 {
+		builder.SetRefundAtUnix(thirdPartyOrder.RefundAtUnix)
+	}
+	if thirdPartyOrder.RefundReason != "" {
+		builder.SetRefundReason(thirdPartyOrder.RefundReason)
+	}
+
+	affected, err := builder.Save(ctx)
+	if err != nil {
+		return fmt.Errorf("payment: 取消订单失败: %w", err)
+	}
+	if affected == 0 {
+		return fmt.Errorf("payment: 取消订单失败: 订单不存在或状态已改变")
+	}
+
+	return nil
+}
+
 func AddRetryTimes(ctx context.Context, orderId uint64) error {
 	_, err := EntClient.PaymentOrder.Update().Where(
 		paymentorder.IDEQ(orderId),

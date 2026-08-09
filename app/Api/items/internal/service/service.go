@@ -50,3 +50,16 @@ func AddItems(ctx context.Context, uid uint64, nonce string, rewards []*shared.R
 	}
 	return nil
 }
+
+func RevokeItems(ctx context.Context, uid uint64, grantNonce, revokeNonce string, rewards []*shared.Reward) *stderr.Error {
+	err := itemStore.RevokeItems(ctx, uid, grantNonce, revokeNonce, rewards)
+	if err != nil {
+		logx.Errorf("回收道具失败 uid=%d nonce=%s err=%v", uid, revokeNonce, err)
+		return stderr.InternalServerError("回收道具失败")
+	}
+
+	if err = itemStore.InvalidateItemCache(ctx, uid); err != nil {
+		logx.Errorf("items: 背包缓存失效失败 uid=%d err=%v", uid, err)
+	}
+	return nil
+}

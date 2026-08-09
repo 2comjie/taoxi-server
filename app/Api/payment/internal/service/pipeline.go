@@ -13,7 +13,6 @@ import (
 	"github.com/2comjie/wali/logx/logdef"
 )
 
-// purchaseOrderWithoutLock 执行支付成功后的发货流水线
 func purchaseOrderWithoutLock(logCtx logdef.ILogger, ctx context.Context, channel PaymentChannel, order *paymentent.PaymentOrder, thirdPartyOrder *paymentTypes.ThirdPartyOrder) (paymentTypes.OrderProcessResult, *stderr.Error) {
 	logCtx.Infof("开始执行支付成功后的发货流水线")
 	if stdErr := stepGrantRewards(logCtx, ctx, order); stdErr != nil {
@@ -39,29 +38,32 @@ func purchaseOrderWithoutLock(logCtx logdef.ILogger, ctx context.Context, channe
 	return paymentTypes.OrderProcessPurchased, nil
 }
 
-// cancelOrderWithoutLock 执行未发货订单的取消流水线。
 func cancelOrderWithoutLock(logCtx logdef.ILogger, ctx context.Context, order *paymentent.PaymentOrder, thirdPartyOrder *paymentTypes.ThirdPartyOrder) (paymentTypes.OrderProcessResult, *stderr.Error) {
-	logCtx.Warnf("支付订单取消流水线暂未实现 order_id=%d", order.ID)
-	return paymentTypes.OrderProcessWaiting, stderr.InternalServerError("支付订单取消服务暂未就绪")
+	if err := paymentStore.MarkOrderCancelled(ctx, order.ID, thirdPartyOrder); err != nil {
+		logCtx.Errorf("取消支付订单失败 err=%v", err)
+		return paymentTypes.OrderProcessWaiting, stderr.InternalServerError("取消支付订单失败")
+	}
+
+	logCtx.Infof("支付订单取消成功")
+	return paymentTypes.OrderProcessCancelled, nil
 }
 
-// revokeOrderWithoutLock 执行已发货订单的奖励回收流水线。
-// 回收能力接入前保持Purchased，不能提前把订单标记为Cancelled。
-func revokeOrderWithoutLock(
-	logCtx logdef.ILogger,
-	ctx context.Context,
-	order *paymentent.PaymentOrder,
-	thirdPartyOrder *paymentTypes.ThirdPartyOrder,
-) (paymentTypes.OrderProcessResult, *stderr.Error) {
+func revokeOrderWithoutLock(logCtx logdef.ILogger, ctx context.Context, order *paymentent.PaymentOrder, thirdPartyOrder *paymentTypes.ThirdPartyOrder) (paymentTypes.OrderProcessResult, *stderr.Error) {
+	logCtx.Infof("开始执行支付退款奖励回收流水线")
 	if stdErr := stepRevokeRewards(logCtx, ctx, order); stdErr != nil {
+		logCtx.Errorf("提交奖励回收任务失败 err=%v", stdErr)
 		return paymentTypes.OrderProcessPurchased, stdErr
 	}
 
-	logCtx.Warnf("支付退款状态更新流水线暂未实现 order_id=%d", order.ID)
-	return paymentTypes.OrderProcessPurchased, stderr.InternalServerError("支付奖励回收服务暂未就绪")
+	if err := paymentStore.MarkOrderRefunded(ctx, order.ID, thirdPartyOrder); err != nil {
+		logCtx.Errorf("更新订单退款状态失败 err=%v", err)
+		return paymentTypes.OrderProcessPurchased, stderr.InternalServerError("更新订单退款状态失败")
+	}
+
+	logCtx.Infof("支付退款奖励回收流水线执行完毕")
+	return paymentTypes.OrderProcessCancelled, nil
 }
 
-// stepGrantRewards 幂等发放订单奖励
 func stepGrantRewards(logCtx logdef.ILogger, ctx context.Context, order *paymentent.PaymentOrder) *stderr.Error {
 	logCtx.Infof("开始发货")
 
@@ -97,18 +99,21 @@ func stepGrantRewards(logCtx logdef.ILogger, ctx context.Context, order *payment
 	return nil
 }
 
-// stepRevokeRewards 幂等回收订单奖励。
-// 后续接入asyncq时使用order.ID作为任务幂等标识，并使用order.Rewards奖励快照。
-func stepRevokeRewards(
-	logCtx logdef.ILogger,
-	ctx context.Context,
-	order *paymentent.PaymentOrder,
-) *stderr.Error {
-	logCtx.Warnf("支付奖励回收步骤暂未实现 order_id=%d", order.ID)
-	return stderr.InternalServerError("支付奖励回收服务暂未就绪")
+func stepRevokeRewards(logCtx logdef.ILogger, ctx context.Context, order *paymentent.PaymentOrder) *stderr.Error {
+	logCtx.Infof("提交奖励回收任务 rewards=%s", string(order.Rewards))
+	if err := asynqx.Enqueue(ctx, &paymentTypes.RevokeTask{
+		OrderId: order.ID,
+		Uid:     order.UID,
+		Rewards: order.Rewards,
+	}); err != nil {
+		logCtx.Errorf("提交奖励回收任务失败 err=%v", err)
+		return stderr.InternalServerError("提交奖励回收任务失败")
+	}
+
+	logCtx.Infof("奖励回收任务提交成功")
+	return nil
 }
 
-// stepComplete 完成第三方订单。Google执行Consume，Apple通常直接返回nil
 func stepComplete(logCtx logdef.ILogger, ctx context.Context, channel PaymentChannel, thirdPartyOrder *paymentTypes.ThirdPartyOrder) *stderr.Error {
 	if err := channel.Complete(ctx, thirdPartyOrder); err != nil {
 		logCtx.Errorf("完成第三方订单失败 err=%v", err)

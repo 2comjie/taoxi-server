@@ -2,18 +2,22 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	entsql "entgo.io/ent/dialect/sql"
 	itement "github.com/2comjie/taoxi-server/app/Api/items/internal/store/ent"
 	"github.com/2comjie/taoxi-server/app/Api/items/internal/store/ent/item"
+	"github.com/2comjie/taoxi-server/app/Api/items/internal/store/ent/itemnonce"
 	itemTypes "github.com/2comjie/taoxi-server/app/Api/items/types"
 	"github.com/2comjie/taoxi-server/internal/config/items"
 	"github.com/2comjie/taoxi-server/internal/config/shared"
 )
 
 var EntClient *itement.Client
+
+var ErrGrantNotCompleted = errors.New("items: 发放任务尚未完成")
 
 func Init(driver *entsql.Driver) {
 	if driver == nil {
@@ -317,5 +321,107 @@ func AddItems(ctx context.Context, uid uint64, nonce string, rewards []*shared.R
 	}
 
 	committed = true
+	return nil
+}
+
+func RevokeItems(ctx context.Context, uid uint64, grantNonce, revokeNonce string, rewards []*shared.Reward) error {
+	tx, err := EntClient.Tx(ctx)
+	if err != nil {
+		return err
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if err = lockUID(ctx, tx, uid); err != nil {
+		return err
+	}
+
+	grantCompleted, err := tx.ItemNonce.Query().
+		Where(
+			itemnonce.UIDEQ(uid),
+			itemnonce.NonceEQ(grantNonce),
+			itemnonce.OpTypeEQ(itemTypes.OperationTypeGrant),
+		).
+		Exist(ctx)
+	if err != nil {
+		return err
+	}
+	if !grantCompleted {
+		return ErrGrantNotCompleted
+	}
+
+	err = tx.ItemNonce.Create().
+		SetUID(uid).
+		SetNonce(revokeNonce).
+		SetOpType(itemTypes.OperationTypeRevoke).
+		Exec(ctx)
+	if err != nil {
+		if itement.IsConstraintError(err) {
+			return nil
+		}
+		return err
+	}
+
+	now := time.Now().Unix()
+	for _, reward := range rewards {
+		if reward == nil {
+			return fmt.Errorf("items: 回收奖励不能为空")
+		}
+		if reward.Count <= 0 {
+			continue
+		}
+
+		err = revokeItemInTx(ctx, tx, uid, reward.ItemTypeId, int64(reward.Count), now)
+		if err != nil {
+			return fmt.Errorf("items: 回收道具失败 item_type_id=%d: %w", reward.ItemTypeId, err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	committed = true
+	return nil
+}
+
+func revokeItemInTx(ctx context.Context, tx *itement.Tx, uid uint64, itemTypeId items.ItemTypeId, count, now int64) error {
+	rows, err := tx.Item.Query().
+		Where(
+			item.UID(uid),
+			item.ItemIDEQ(int32(itemTypeId)),
+			notExpiredPredicate(now),
+			availablePredicate(),
+		).
+		Order(func(s *entsql.Selector) {
+			s.OrderExpr(entsql.Expr("(`expire_at_unix` = 0) ASC, `expire_at_unix` ASC"))
+		}).
+		All(ctx)
+	if err != nil {
+		return err
+	}
+
+	remaining := count
+	for _, row := range rows {
+		if remaining <= 0 {
+			break
+		}
+
+		available := row.Count - row.UsedCount
+		deduct := min(available, remaining)
+		if err = tx.Item.UpdateOneID(row.ID).
+			AddUsedCount(deduct).
+			SetUpdateAtUnix(now).
+			Exec(ctx); err != nil {
+			return err
+		}
+		remaining -= deduct
+	}
+
 	return nil
 }

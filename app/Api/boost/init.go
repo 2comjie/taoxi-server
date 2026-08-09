@@ -8,8 +8,9 @@ import (
 
 	"github.com/2comjie/taoxi-server/app/Api/login"
 	"github.com/2comjie/taoxi-server/app/Api/payment"
-	paymentConfig "github.com/2comjie/taoxi-server/internal/config/payment"
+	"github.com/2comjie/taoxi-server/internal/deploy/external"
 	nodeDeploy "github.com/2comjie/taoxi-server/internal/deploy/node"
+	"github.com/2comjie/taoxi-server/pkg/asynqx"
 	"github.com/2comjie/taoxi-server/pkg/middleware/auth"
 	"github.com/2comjie/taoxi-server/pkg/middleware/extract"
 	"github.com/2comjie/taoxi-server/pkg/middleware/inout"
@@ -41,11 +42,14 @@ func Init() {
 
 	openGroup := eg.Group("open")
 	openGroup.Use(auth.Cors())
+
+	asynqServer := asynqx.NewServer(external.RedisAsynq, map[string]int{"default": 1})
 	args := modules.Modules{
 		Engine:      eg,
 		ClientGroup: clientGroup,
 		OpenGroup:   openGroup,
 		Cron:        systemCron,
+		AsynqServer: asynqServer,
 	}
 
 	// web 模块初始化
@@ -77,18 +81,31 @@ func Init() {
 			return nil
 		},
 	}
-	nodeDeploy.Init(deploy.WithComponents(webComponent))
-
-	// 初始化配置
-	err := paymentConfig.Init(nodeDeploy.App().Config())
-	if err != nil {
-		panic(err)
+	cronComponent := &app.CommonComponent{
+		MName: "system-cron",
+		MStart: func() error {
+			systemCron.Start()
+			logx.Infof("system-cron: 定时任务启动")
+			return nil
+		},
+		MShutdown: func(ctx context.Context) error {
+			stopped := systemCron.Stop()
+			select {
+			case <-stopped.Done():
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		},
 	}
+
+	nodeDeploy.Init(deploy.WithComponents(webComponent, cronComponent, asynqServer))
 
 	login.Init(args)
 	payment.Init(args)
 
-	err = nodeDeploy.App().Run()
+	err := nodeDeploy.App().Run()
+
 	if err != nil {
 		panic(err)
 	}

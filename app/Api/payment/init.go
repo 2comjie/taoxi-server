@@ -3,6 +3,7 @@ package payment
 import (
 	"fmt"
 
+	paymentCron "github.com/2comjie/taoxi-server/app/Api/payment/internal/cron"
 	"github.com/2comjie/taoxi-server/app/Api/payment/internal/router"
 	paymentService "github.com/2comjie/taoxi-server/app/Api/payment/internal/service"
 	paymentStore "github.com/2comjie/taoxi-server/app/Api/payment/internal/store"
@@ -18,6 +19,7 @@ func Init(args modules.Modules) {
 	}
 
 	paymentStore.Init(external.MysqlUser())
-	paymentService.Init(external.RedisUser())
+	paymentService.Init(external.RedisPayment())
+	paymentCron.Init(args.Cron)
 	router.Init(args)
 }

@@ -18,11 +18,11 @@ func Init(args modules.Modules) {
 
 	paymentGroup.POST("create_order",
 		limit.Limiter("create_order", 1, 1),
-		limit.LockUser(paymentRedisKey.UserLock, external.RedisUser()),
+		limit.LockUser(paymentRedisKey.UserLock, external.RedisPayment()),
 		inout.UidHandler[paymentTypes.CreateOrderReq, paymentTypes.CreateOrderRsp](handleCreateOrder))
 
 	paymentGroup.POST("upload_receipt_req",
-		limit.LockUser(paymentRedisKey.UserLock, external.RedisUser()),
+		limit.LockUser(paymentRedisKey.UserLock, external.RedisPayment()),
 		inout.UidHandler[paymentTypes.UploadReceiptReq, paymentTypes.UploadReceiptRsp](handleUploadReceipt))
 }
 

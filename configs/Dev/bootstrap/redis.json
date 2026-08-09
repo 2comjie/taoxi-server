@@ -13,6 +13,13 @@
     "db": 1,
     "PoolSize": 50
   },
+  "payment": {
+    "addrs": [
+      "localhost:6379"
+    ],
+    "db": 2,
+    "PoolSize": 50
+  },
   "registry": {
     "addrs": [
       "localhost:6379"
@@ -21,6 +28,13 @@
     "PoolSize": 50
   },
   "locator": {
+    "addrs": [
+      "localhost:6379"
+    ],
+    "db": 1,
+    "PoolSize": 50
+  },
+  "asynq": {
     "addrs": [
       "localhost:6379"
     ],

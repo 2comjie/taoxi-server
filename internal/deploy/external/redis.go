@@ -59,9 +59,15 @@ func RedisGame() redis.UniversalClient {
 func RedisUser() redis.UniversalClient {
 	return redisMap["user"]
 }
+func RedisPayment() redis.UniversalClient {
+	return redisMap["payment"]
+}
 func RedisRegistry() redis.UniversalClient {
 	return redisMap["registry"]
 }
 func RedisLocator() redis.UniversalClient {
 	return redisMap["locator"]
+}
+func RedisAsynq() redis.UniversalClient {
+	return redisMap["asynq"]
 }

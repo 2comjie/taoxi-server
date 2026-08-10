@@ -10,19 +10,13 @@ import (
 	paymentStore "github.com/2comjie/taoxi-server/app/Api/payment/internal/store"
 	paymentent "github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent"
 	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
+	paymentConfig "github.com/2comjie/taoxi-server/internal/config/payment"
 	googleplayIAP "github.com/2comjie/taoxi-server/pkg/googleplay/iap"
-	"github.com/2comjie/wali/etc"
 	"github.com/2comjie/wali/logx"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/androidpublisher/v3"
 	"google.golang.org/api/option"
 	"google.golang.org/api/pubsub/v1"
-)
-
-const (
-	googlePlayPackageNameEnv     = "GOOGLE_PLAY_PACKAGE_NAME"
-	googlePlayCredentialsJSONEnv = "GOOGLE_PLAY_CREDENTIALS_JSON"
-	googlePlayPubSubEnv          = "GOOGLE_PLAY_PUBSUB_SUBSCRIPTION"
 )
 
 type GoogleChannel struct {
@@ -34,21 +28,17 @@ type GoogleChannel struct {
 }
 
 // InitGoogleChannel 初始化 Google Play 支付渠道。
-// 配置：GOOGLE_PLAY_PACKAGE_NAME、GOOGLE_PLAY_CREDENTIALS_JSON、GOOGLE_PLAY_PUBSUB_SUBSCRIPTION。
+// 配置：payment.google。
 // Google API：https://developers.google.com/android-publisher/getting_started
 // RTDN：https://developer.android.com/google/play/billing/getting-ready#configure-rtdn
 func InitGoogleChannel(ctx context.Context) error {
-	packageName := etc.String(googlePlayPackageNameEnv)
-	if packageName == "" {
-		logx.Infof("未配置%s，Google Play支付渠道未启用", googlePlayPackageNameEnv)
+	googleConfig := paymentConfig.GetGoogle()
+	if googleConfig.PackageName == "" {
+		logx.Infof("未配置payment.google.package_name，Google Play支付渠道未启用")
 		return nil
 	}
 
-	config, err := google.JWTConfigFromJSON(
-		[]byte(etc.String(googlePlayCredentialsJSONEnv)),
-		androidpublisher.AndroidpublisherScope,
-		pubsub.PubsubScope,
-	)
+	config, err := google.JWTConfigFromJSON(googleConfig.Credentials, androidpublisher.AndroidpublisherScope, pubsub.PubsubScope)
 	if err != nil {
 		return fmt.Errorf("payment: 解析Google服务账号失败: %w", err)
 	}
@@ -63,13 +53,13 @@ func InitGoogleChannel(ctx context.Context) error {
 	payloadKey := sha256.Sum256(config.PrivateKey)
 
 	RegisterChannel(&GoogleChannel{
-		packageName:  packageName,
+		packageName:  googleConfig.PackageName,
 		service:      service,
 		pubsub:       pubsubService,
-		subscription: etc.String(googlePlayPubSubEnv),
+		subscription: googleConfig.PubSubSubscription,
 		payloadKey:   payloadKey[:16],
 	})
-	logx.Infof("Google Play支付渠道初始化成功 package_name=%s", packageName)
+	logx.Infof("Google Play支付渠道初始化成功 package_name=%s", googleConfig.PackageName)
 	return nil
 }
 

@@ -149,6 +149,8 @@ func Init(options ...deploy.Option) {
 		if err != nil {
 			panic(err)
 		}
+
+		logx.Infof("网关启动 %+v", global.Instance())
 		err = global.Run()
 		if err != nil {
 			panic(err)

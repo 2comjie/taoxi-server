@@ -11,6 +11,7 @@ import (
 	netx "github.com/2comjie/wali/core/net"
 	"github.com/2comjie/wali/deploy"
 	redisLocator "github.com/2comjie/wali/locator/redis"
+	"github.com/2comjie/wali/logx"
 	redisRegistry "github.com/2comjie/wali/registry/redis"
 )
 
@@ -62,6 +63,8 @@ func Init(options ...deploy.Option) {
 		options = append(options, deploy.WithRPCHost(privateIP))
 
 		global, err = deploy.Node(options...)
+
+		logx.Infof("节点启动 %+v", global.Instance())
 		if err != nil {
 			panic(err)
 		}

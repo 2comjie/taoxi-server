@@ -1,0 +1,9 @@
+### 获取用户道具
+POST {{baseUrl}}/api/config/gate_address
+Content-Type: application/json
+format: 1
+lang: zh-CN
+token: {{accessToken}}
+
+{
+}

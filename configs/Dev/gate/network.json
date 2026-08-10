@@ -1,0 +1,18 @@
+{
+  "1": {
+    "tcp_listen_address": "0.0.0.0:9001",
+    "tcp_external_address": "127.0.0.1:9001",
+    "kcp_listen_address": "0.0.0.0:9002",
+    "kcp_external_address": "127.0.0.1:9002",
+    "ws_listen_address": "0.0.0.0:9003",
+    "ws_external_address": "ws://127.0.0.1:9003/"
+  },
+  "2": {
+    "tcp_listen_address": "0.0.0.0:9011",
+    "tcp_external_address": "127.0.0.1:9011",
+    "kcp_listen_address": "0.0.0.0:9012",
+    "kcp_external_address": "127.0.0.1:9012",
+    "ws_listen_address": "0.0.0.0:9013",
+    "ws_external_address": "ws://127.0.0.1:9013/"
+  }
+}

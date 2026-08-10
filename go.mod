@@ -4,12 +4,13 @@ go 1.25.0
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/2comjie/wali v0.1.4
+	github.com/2comjie/wali v0.1.6
 	github.com/2comjie/wali/locator/redis v0.1.2
 	github.com/2comjie/wali/registry/redis v0.1.2
 	github.com/dgraph-io/ristretto/v2 v2.4.0
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.0
+	github.com/go-resty/resty/v2 v2.17.2
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0

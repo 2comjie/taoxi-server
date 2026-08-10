@@ -2,10 +2,10 @@ package gateDeploy
 
 import (
 	"fmt"
-	"net"
 	"sync"
 
 	"github.com/2comjie/taoxi-server/flags"
+	gateConfig "github.com/2comjie/taoxi-server/internal/config/gate"
 	"github.com/2comjie/taoxi-server/internal/deploy/external"
 	"github.com/2comjie/taoxi-server/internal/deploy/instruction"
 	"github.com/2comjie/taoxi-server/pkg/jwt"
@@ -28,6 +28,12 @@ import (
 var global *deploy.GateApp
 var once sync.Once
 
+const (
+	MetaTCPExternalAddress = "gate.tcp.external_address"
+	MetaKCPExternalAddress = "gate.kcp.external_address"
+	MetaWSExternalAddress  = "gate.ws.external_address"
+)
+
 func Init(options ...deploy.Option) {
 	once.Do(func() {
 		var err error
@@ -44,6 +50,13 @@ func Init(options ...deploy.Option) {
 			panic(err)
 		}
 		options = append(options, deploy.WithConfig(center))
+		if err = gateConfig.Init(center); err != nil {
+			panic(err)
+		}
+		networkConfig, err := gateConfig.GetNetwork(flags.ServiceIndex)
+		if err != nil {
+			panic(err)
+		}
 
 		// 2. 初始化日志/redis
 		err = instruction.InitLogger(center)
@@ -69,15 +82,15 @@ func Init(options ...deploy.Option) {
 		options = append(options, deploy.WithRPCHost(privateIP))
 
 		// 5. 初始化网关 net 服务
-		tcpListener, err := netTcp.Listen(net.JoinHostPort(privateIP, "0"))
+		tcpListener, err := netTcp.Listen(networkConfig.TCPListenAddress)
 		if err != nil {
 			panic(err)
 		}
-		kcpListener, err := netKcp.Listen(net.JoinHostPort(privateIP, "0"))
+		kcpListener, err := netKcp.Listen(networkConfig.KCPListenAddress)
 		if err != nil {
 			panic(err)
 		}
-		wsListener, err := netWs.Listen(net.JoinHostPort(privateIP, "0"))
+		wsListener, err := netWs.Listen(networkConfig.WSListenAddress)
 		if err != nil {
 			panic(err)
 		}
@@ -124,6 +137,12 @@ func Init(options ...deploy.Option) {
 			OnReq: func(context *network.ReqContext) {
 				logx.Debugf("gate req: %v", context)
 			},
+		}))
+
+		options = append(options, deploy.WithMetaData(map[string]string{
+			MetaTCPExternalAddress: networkConfig.TCPExternalAddress,
+			MetaKCPExternalAddress: networkConfig.KCPExternalAddress,
+			MetaWSExternalAddress:  networkConfig.WSExternalAddress,
 		}))
 
 		global, err = deploy.Gate(options...)

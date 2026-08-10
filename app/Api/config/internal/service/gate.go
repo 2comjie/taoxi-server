@@ -23,6 +23,9 @@ func RdGateAddress(ctx context.Context, uid uint64) (endpoint.ServiceInstance, *
 		if service.Status != endpoint.Working {
 			continue
 		}
+		if service.ServiceName != "gate" {
+			continue
+		}
 		gateList = append(gateList, service)
 	}
 	if len(gateList) == 0 {

@@ -118,24 +118,24 @@ func Init(options ...deploy.Option) {
 		),
 		)
 		options = append(options, deploy.WithGateErrorHandler(func(ctx *gate.Context, err error) {
-			logx.Warnf("gate error: %v ctx: %v", err, ctx)
+			logx.Warnf("gate error: %+v ctx: %+v", err, ctx)
 		}))
 		options = append(options, deploy.WithGateHooks(network.Hooks{
 			OnSessionStart: func(session *network.Session) {
-				logx.Infof("gate session start: %v", session)
+				logx.Infof("gate session start: %+v", session)
 			},
 			OnSessionEnd: func(session *network.Session) {
-				logx.Infof("gate session end: %v", session)
+				logx.Infof("gate session end: %+v", session)
 			},
 			OnSessionBind: func(session *network.Session) error {
-				logx.Infof("gate session bind: %v", session)
+				logx.Infof("gate session bind: %+v", session)
 				return nil
 			},
 			OnHeartbeat: func(session *network.Session) {
-				logx.Debugf("gate session heartbeat: %v", session)
+				logx.Debugf("gate session heartbeat: %+v", session)
 			},
 			OnReq: func(context *network.ReqContext) {
-				logx.Debugf("gate req: %v", context)
+				logx.Debugf("gate req: %+v", context)
 			},
 		}))
 

@@ -27,3 +27,15 @@ lang: zh-CN
 > {%
     client.global.set("accessToken", response.body.result.access_token);
 %}
+
+### Debug Uid 登陆
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+format: 1
+lang: zh-CN
+
+{
+  "login_type": 100,
+  "identity_token": "10000000"
+}
+

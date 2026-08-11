@@ -25,5 +25,6 @@ func Init(args modules.Modules) {
 	}
 	loginManager := loginService.NewManager(store, privateKey)
 	loginManager.Register(loginService.NewGuestLoginProvider(store))
+	loginManager.Register(loginService.NewDebugLoginProvider(store))
 	router.Init(args, loginManager)
 }

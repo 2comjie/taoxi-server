@@ -106,6 +106,7 @@ func (f *FSM[A, T]) switchState(arg A, newState T, isTimeOut bool) {
 
 	oldStateInfo.PostExist(arg, newState, isTimeOut)
 	newStateInfo.PostEnter(oldState, arg, isTimeOut)
+
 	if f.postSwitchState != nil {
 		f.postSwitchState(oldState, newState, arg)
 	}

@@ -1,6 +1,6 @@
 module github.com/2comjie/taoxi-server
 
-go 1.25.0
+go 1.24.3
 
 require (
 	entgo.io/ent v0.14.6

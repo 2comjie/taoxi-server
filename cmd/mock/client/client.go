@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/2comjie/nova/logx"
+	"github.com/2comjie/nova/logx/logdef"
+	"github.com/2comjie/nova/network"
+	netWs "github.com/2comjie/nova/network/transport/ws"
 	configTypes "github.com/2comjie/taoxi-server/app/Api/config/types"
 	loginTypes "github.com/2comjie/taoxi-server/app/Api/login/types"
 	"github.com/2comjie/taoxi-server/internal/fsm"
-	"github.com/2comjie/wali/logx"
-	"github.com/2comjie/wali/logx/logdef"
-	"github.com/2comjie/wali/network"
-	netWs "github.com/2comjie/wali/network/transport/ws"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cast"
 )

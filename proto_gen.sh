@@ -5,8 +5,8 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 tool_dir="${TMPDIR:-/tmp}/taoxi-protoc-tools"
 mkdir -p "$tool_dir"
 
-go build -o "$tool_dir/protoc-gen-go" google.golang.org/protobuf/cmd/protoc-gen-go
-go -C "$script_dir/../wali" build -o "$tool_dir/protoc-gen-go-grpc-locator" ./cmd/protoc-gen-go-grpc-locator
+GOWORK=off go -C "$script_dir/../nova" build -o "$tool_dir/protoc-gen-go" google.golang.org/protobuf/cmd/protoc-gen-go
+GOWORK=off go -C "$script_dir/../nova/cmd/protoc-gen-go-grpc-locator" build -o "$tool_dir/protoc-gen-go-grpc-locator" .
 
 PATH="$tool_dir:$PATH" protoc \
   --proto_path="$script_dir/proto" \

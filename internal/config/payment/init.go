@@ -3,7 +3,7 @@ package paymentConfig
 import (
 	"maps"
 
-	"github.com/2comjie/wali/config"
+	"github.com/2comjie/nova/config"
 )
 
 const productConfigKey = "payment.product"

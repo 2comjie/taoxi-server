@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/2comjie/wali/logx"
+	"github.com/2comjie/nova/logx"
 	hibikenAsynq "github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 )

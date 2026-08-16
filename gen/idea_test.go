@@ -7,7 +7,7 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/2comjie/wali/core/util"
+	"github.com/2comjie/nova/core/util"
 )
 
 const runTemplate = `<component name="ProjectRunConfigurationManager">

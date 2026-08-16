@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"sync"
 
+	netx "github.com/2comjie/nova/core/net"
+	"github.com/2comjie/nova/deploy"
+	redisLocator "github.com/2comjie/nova/locator/redis"
+	"github.com/2comjie/nova/logx"
+	redisRegistry "github.com/2comjie/nova/registry/redis"
 	"github.com/2comjie/taoxi-server/flags"
 	"github.com/2comjie/taoxi-server/internal/deploy/external"
 	"github.com/2comjie/taoxi-server/internal/deploy/instruction"
 	"github.com/2comjie/taoxi-server/pkg/pprof"
-	netx "github.com/2comjie/wali/core/net"
-	"github.com/2comjie/wali/deploy"
-	redisLocator "github.com/2comjie/wali/locator/redis"
-	"github.com/2comjie/wali/logx"
-	redisRegistry "github.com/2comjie/wali/registry/redis"
 )
 
 var global *deploy.NodeApp

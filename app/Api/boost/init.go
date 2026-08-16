@@ -6,6 +6,10 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/2comjie/nova/app"
+	"github.com/2comjie/nova/core/help"
+	"github.com/2comjie/nova/deploy"
+	"github.com/2comjie/nova/logx"
 	"github.com/2comjie/taoxi-server/app/Api/config"
 	"github.com/2comjie/taoxi-server/app/Api/items"
 	"github.com/2comjie/taoxi-server/app/Api/login"
@@ -19,10 +23,6 @@ import (
 	"github.com/2comjie/taoxi-server/pkg/middleware/inout"
 	routeRecovery "github.com/2comjie/taoxi-server/pkg/middleware/recovery"
 	"github.com/2comjie/taoxi-server/pkg/modules"
-	"github.com/2comjie/wali/app"
-	"github.com/2comjie/wali/core/help"
-	"github.com/2comjie/wali/deploy"
-	"github.com/2comjie/wali/logx"
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
 )

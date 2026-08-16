@@ -1,6 +1,6 @@
 package flags
 
-import waliflag "github.com/2comjie/wali/flag"
+import novaflag "github.com/2comjie/nova/flag"
 
 var ServiceIndex int   // 服务的索引
 var ServiceName string // 服务名称
@@ -12,9 +12,9 @@ const (
 )
 
 func init() {
-	ServiceIndex = waliflag.Int("service-index", -1)
-	ServiceName = waliflag.String("service-name", "")
-	Env = waliflag.String("env", Local)
+	ServiceIndex = novaflag.Int("service-index", -1)
+	ServiceName = novaflag.String("service-name", "")
+	Env = novaflag.String("env", Local)
 	if ServiceIndex == -1 {
 		panic("service-index is required")
 	}

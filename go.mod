@@ -4,9 +4,9 @@ go 1.24.3
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/2comjie/wali v0.1.10
-	github.com/2comjie/wali/locator/redis v0.1.2
-	github.com/2comjie/wali/registry/redis v0.1.2
+	github.com/2comjie/nova v0.2.0
+	github.com/2comjie/nova/locator/redis v0.2.0
+	github.com/2comjie/nova/registry/redis v0.2.0
 	github.com/dgraph-io/ristretto/v2 v2.4.0
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.0

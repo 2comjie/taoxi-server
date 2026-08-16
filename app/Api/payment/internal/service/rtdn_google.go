@@ -7,11 +7,11 @@ import (
 	"errors"
 	"fmt"
 
+	redisLock "github.com/2comjie/nova/lock/redis"
+	"github.com/2comjie/nova/logx"
+	"github.com/2comjie/nova/logx/logdef"
 	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
 	paymentRedisKey "github.com/2comjie/taoxi-server/internal/redis_key/payment"
-	redisLock "github.com/2comjie/wali/lock/redis"
-	"github.com/2comjie/wali/logx"
-	"github.com/2comjie/wali/logx/logdef"
 	"google.golang.org/api/pubsub/v1"
 )
 

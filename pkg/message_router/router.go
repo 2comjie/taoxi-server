@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/2comjie/wali/actor"
-	"github.com/2comjie/wali/actor/actorDef"
-	"github.com/2comjie/wali/app/node"
+	"github.com/2comjie/nova/actor"
+	"github.com/2comjie/nova/actor/actorDef"
+	"github.com/2comjie/nova/app/node"
 	"google.golang.org/protobuf/proto"
 )
 

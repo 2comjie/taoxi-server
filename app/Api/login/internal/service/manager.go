@@ -5,11 +5,11 @@ import (
 	"crypto/ed25519"
 	"errors"
 
+	"github.com/2comjie/nova/logx"
 	loginStore "github.com/2comjie/taoxi-server/app/Api/login/internal/store"
 	loginTypes "github.com/2comjie/taoxi-server/app/Api/login/types"
 	"github.com/2comjie/taoxi-server/pkg/jwt"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
-	"github.com/2comjie/wali/logx"
 	"github.com/spf13/cast"
 )
 

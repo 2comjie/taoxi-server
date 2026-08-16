@@ -6,11 +6,11 @@ import (
 	paymentConfig "github.com/2comjie/taoxi-server/internal/config/payment"
 	"github.com/2comjie/taoxi-server/pkg/asynqx"
 
+	"github.com/2comjie/nova/logx/logdef"
 	paymentStore "github.com/2comjie/taoxi-server/app/Api/payment/internal/store"
 	paymentent "github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent"
 	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
-	"github.com/2comjie/wali/logx/logdef"
 )
 
 func purchaseOrderWithoutLock(logCtx logdef.ILogger, ctx context.Context, channel PaymentChannel, order *paymentent.PaymentOrder, thirdPartyOrder *paymentTypes.ThirdPartyOrder) (paymentTypes.OrderProcessResult, *stderr.Error) {

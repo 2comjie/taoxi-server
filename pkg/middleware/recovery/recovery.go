@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/2comjie/wali/logx"
+	"github.com/2comjie/nova/logx"
 	"github.com/gin-gonic/gin"
 )
 

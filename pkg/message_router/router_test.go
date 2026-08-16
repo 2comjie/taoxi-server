@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/2comjie/wali/app/node"
+	"github.com/2comjie/nova/app/node"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )

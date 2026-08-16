@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/2comjie/nova/deploy"
+	"github.com/2comjie/nova/logx"
 	mockTypes "github.com/2comjie/taoxi-server/app/Api/mock/types"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
-	"github.com/2comjie/wali/deploy"
-	"github.com/2comjie/wali/logx"
 	"github.com/spf13/cast"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"

@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/2comjie/nova/core/util"
+	novaflag "github.com/2comjie/nova/flag"
+	"github.com/2comjie/nova/logx"
+	"github.com/2comjie/nova/logx/wlog"
 	mockClient "github.com/2comjie/taoxi-server/cmd/mock/client"
-	"github.com/2comjie/wali/core/util"
-	waliflag "github.com/2comjie/wali/flag"
-	"github.com/2comjie/wali/logx"
-	"github.com/2comjie/wali/logx/wlog"
 )
 
 var uidNum int
@@ -20,9 +20,9 @@ var baseUrl string
 var wg sync.WaitGroup
 
 func init() {
-	uidNum = waliflag.Int("uid-num", 10)
-	uidStart = uint64(waliflag.Int("uid-start", 10000000))
-	baseUrl = waliflag.String("base-url", "127.0.0.1:8080")
+	uidNum = novaflag.Int("uid-num", 10)
+	uidStart = uint64(novaflag.Int("uid-start", 10000000))
+	baseUrl = novaflag.String("base-url", "127.0.0.1:8080")
 }
 
 func main() {

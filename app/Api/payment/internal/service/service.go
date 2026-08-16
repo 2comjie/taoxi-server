@@ -6,12 +6,12 @@ import (
 
 	"github.com/2comjie/taoxi-server/pkg/asynqx"
 
+	"github.com/2comjie/nova/logx/logdef"
 	paymentStore "github.com/2comjie/taoxi-server/app/Api/payment/internal/store"
 	paymentent "github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent"
 	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
 	paymentConfig "github.com/2comjie/taoxi-server/internal/config/payment"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
-	"github.com/2comjie/wali/logx/logdef"
 	"github.com/redis/go-redis/v9"
 )
 

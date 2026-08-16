@@ -1,7 +1,7 @@
 package items
 
 import (
-	"github.com/2comjie/wali/config"
+	"github.com/2comjie/nova/config"
 	"maps"
 )
 

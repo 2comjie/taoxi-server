@@ -6,11 +6,11 @@ import (
 	"fmt"
 
 	entsql "entgo.io/ent/dialect/sql"
+	"github.com/2comjie/nova/logx"
 	loginent "github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent"
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/account"
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/store/ent/identity"
 	loginTypes "github.com/2comjie/taoxi-server/app/Api/login/types"
-	"github.com/2comjie/wali/logx"
 )
 
 var (

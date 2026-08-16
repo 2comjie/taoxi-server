@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/2comjie/nova/actor/actorDef"
+	"github.com/2comjie/nova/logx"
+	"github.com/2comjie/nova/logx/logdef"
 	"github.com/2comjie/taoxi-server/internal/deploy/external"
-	"github.com/2comjie/wali/actor/actorDef"
-	"github.com/2comjie/wali/logx"
-	"github.com/2comjie/wali/logx/logdef"
 	"github.com/spf13/cast"
 )
 

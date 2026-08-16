@@ -3,10 +3,10 @@ package paymentService
 import (
 	"context"
 
+	"github.com/2comjie/nova/logx/logdef"
 	paymentent "github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent"
 	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
-	"github.com/2comjie/wali/logx/logdef"
 )
 
 //内部状态	第三方状态	处理

@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
+	redisLock "github.com/2comjie/nova/lock/redis"
+	"github.com/2comjie/nova/logx"
+	"github.com/2comjie/nova/logx/logdef"
 	paymentStore "github.com/2comjie/taoxi-server/app/Api/payment/internal/store"
 	paymentent "github.com/2comjie/taoxi-server/app/Api/payment/internal/store/ent"
 	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
 	paymentRedisKey "github.com/2comjie/taoxi-server/internal/redis_key/payment"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
-	redisLock "github.com/2comjie/wali/lock/redis"
-	"github.com/2comjie/wali/logx"
-	"github.com/2comjie/wali/logx/logdef"
 )
 
 const (

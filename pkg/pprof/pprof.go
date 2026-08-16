@@ -8,9 +8,9 @@ import (
 	httppprof "net/http/pprof"
 	"time"
 
-	"github.com/2comjie/wali/app"
-	"github.com/2comjie/wali/core/help"
-	"github.com/2comjie/wali/logx"
+	"github.com/2comjie/nova/app"
+	"github.com/2comjie/nova/core/help"
+	"github.com/2comjie/nova/logx"
 	"github.com/spf13/cast"
 )
 

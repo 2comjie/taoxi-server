@@ -6,12 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/2comjie/nova/config"
+	"github.com/2comjie/nova/logx"
+	"github.com/2comjie/nova/logx/logdef"
+	"github.com/2comjie/nova/logx/wlog"
 	"github.com/2comjie/taoxi-server/flags"
 	"github.com/2comjie/taoxi-server/pkg/loggerdef"
-	"github.com/2comjie/wali/config"
-	"github.com/2comjie/wali/logx"
-	"github.com/2comjie/wali/logx/logdef"
-	"github.com/2comjie/wali/logx/wlog"
 )
 
 func InitLogger(center config.Config) error {

@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/2comjie/wali/app/gate"
+	"github.com/2comjie/nova/app/gate"
 )
 
 func Init() *gate.Router {

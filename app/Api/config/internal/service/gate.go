@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 
+	"github.com/2comjie/nova/core/endpoint"
+	"github.com/2comjie/nova/logx"
 	nodeDeploy "github.com/2comjie/taoxi-server/internal/deploy/node"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
-	"github.com/2comjie/wali/core/endpoint"
-	"github.com/2comjie/wali/logx"
 )
 
 func RdGateAddress(ctx context.Context, uid uint64) (endpoint.ServiceInstance, *stderr.Error) {

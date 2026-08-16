@@ -4,13 +4,13 @@ import (
 	"crypto/ed25519"
 	"fmt"
 
+	"github.com/2comjie/nova/etc"
 	"github.com/2comjie/taoxi-server/app/Api/login/internal/router"
 	loginService "github.com/2comjie/taoxi-server/app/Api/login/internal/service"
 	loginStore "github.com/2comjie/taoxi-server/app/Api/login/internal/store"
 	"github.com/2comjie/taoxi-server/internal/deploy/external"
 	"github.com/2comjie/taoxi-server/pkg/jwt"
 	"github.com/2comjie/taoxi-server/pkg/modules"
-	"github.com/2comjie/wali/etc"
 )
 
 func Init(args modules.Modules) {

@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	redisLock "github.com/2comjie/nova/lock/redis"
+	"github.com/2comjie/nova/logx"
 	midef "github.com/2comjie/taoxi-server/pkg/middleware/def"
 	"github.com/2comjie/taoxi-server/pkg/xhttp"
-	redisLock "github.com/2comjie/wali/lock/redis"
-	"github.com/2comjie/wali/logx"
 	"github.com/gin-gonic/gin"
 	"github.com/patrickmn/go-cache"
 	"github.com/redis/go-redis/v9"

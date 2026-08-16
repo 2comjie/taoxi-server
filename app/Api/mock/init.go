@@ -1,11 +1,11 @@
 package mock
 
 import (
+	"github.com/2comjie/nova/deploy"
 	"github.com/2comjie/taoxi-server/app/Api/mock/internal/router"
 	"github.com/2comjie/taoxi-server/app/Api/mock/internal/service"
 	pbPlayer "github.com/2comjie/taoxi-server/pb/player"
 	"github.com/2comjie/taoxi-server/pkg/modules"
-	"github.com/2comjie/wali/deploy"
 	"google.golang.org/protobuf/proto"
 )
 

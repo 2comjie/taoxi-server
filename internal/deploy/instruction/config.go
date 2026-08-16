@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/2comjie/nova/config"
+	"github.com/2comjie/nova/config/file"
+	"github.com/2comjie/nova/core/util"
 	"github.com/2comjie/taoxi-server/flags"
 	"github.com/2comjie/taoxi-server/pkg/loggerdef"
-	"github.com/2comjie/wali/config"
-	"github.com/2comjie/wali/config/file"
-	"github.com/2comjie/wali/core/util"
 )
 
 type Config struct {

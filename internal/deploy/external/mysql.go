@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	entSQL "entgo.io/ent/dialect/sql"
-	"github.com/2comjie/wali/config"
+	"github.com/2comjie/nova/config"
 	_ "github.com/go-sql-driver/mysql"
 )
 

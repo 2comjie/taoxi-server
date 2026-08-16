@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/2comjie/nova/logx"
 	paymentService "github.com/2comjie/taoxi-server/app/Api/payment/internal/service"
 	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
 	"github.com/2comjie/taoxi-server/internal/deploy/external"
@@ -10,7 +11,6 @@ import (
 	"github.com/2comjie/taoxi-server/pkg/middleware/limit"
 	"github.com/2comjie/taoxi-server/pkg/modules"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
-	"github.com/2comjie/wali/logx"
 )
 
 func Init(args modules.Modules) {

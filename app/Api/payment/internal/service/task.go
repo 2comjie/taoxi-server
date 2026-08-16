@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/2comjie/nova/logx"
 	"github.com/2comjie/taoxi-server/app/Api/items"
 	paymentTypes "github.com/2comjie/taoxi-server/app/Api/payment/types"
 	"github.com/2comjie/taoxi-server/internal/config/shared"
 	"github.com/2comjie/taoxi-server/pkg/asynqx"
-	"github.com/2comjie/wali/logx"
 	hibikenAsynq "github.com/hibiken/asynq"
 	"time"
 )

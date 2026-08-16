@@ -1,6 +1,6 @@
 package loggerdef
 
-import "github.com/2comjie/wali/logx/logdef"
+import "github.com/2comjie/nova/logx/logdef"
 
 type Log struct {
 	Path   string

@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/2comjie/nova/logx"
 	midef "github.com/2comjie/taoxi-server/pkg/middleware/def"
 	"github.com/2comjie/taoxi-server/pkg/xhttp"
-	"github.com/2comjie/wali/logx"
 	"github.com/gin-gonic/gin"
 	"github.com/patrickmn/go-cache"
 )

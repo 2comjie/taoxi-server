@@ -3,7 +3,7 @@ package gateConfig
 import (
 	"fmt"
 
-	"github.com/2comjie/wali/config"
+	"github.com/2comjie/nova/config"
 )
 
 const networkConfigKey = "gate.network"

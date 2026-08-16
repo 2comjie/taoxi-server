@@ -78,6 +78,20 @@ func TestGenerate(t *testing.T) {
 			Package:    "github.com/2comjie/taoxi-server/app/Gate",
 			WorkDir:    workDir,
 		},
+		{
+			Name:       "04_Player_1",
+			ModuleName: moduleName,
+			Args:       "-service-name player -service-index 1 -env Local",
+			Package:    "github.com/2comjie/taoxi-server/app/Player",
+			WorkDir:    workDir,
+		},
+		{
+			Name:       "05_Player_2",
+			ModuleName: moduleName,
+			Args:       "-service-name player -service-index 2 -env Local",
+			Package:    "github.com/2comjie/taoxi-server/app/Player",
+			WorkDir:    workDir,
+		},
 	}
 
 	for _, config := range configs {

@@ -1,0 +1,12 @@
+### 模拟网关向 Player Actor 发送 Hi 请求
+POST {{baseUrl}}/x/mock/player
+Content-Type: application/json
+format: 1
+
+{
+  "uid": 10000000,
+  "route": 1,
+  "json_body": {
+    "name": "taoxi"
+  }
+}

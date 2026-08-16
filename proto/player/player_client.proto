@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package taoxi.player;
+
+option go_package = "github.com/2comjie/taoxi-server/pb/player;pbPlayer";
+
+enum ReqType{
+  Unknow = 0;
+  Hi = 1;
+}
+
+message HiReq{
+  string name = 1;
+}
+message HiRsp{
+  string msg = 1;
+}

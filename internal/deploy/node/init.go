@@ -60,7 +60,7 @@ func Init(options ...deploy.Option) {
 		if err != nil {
 			panic(err)
 		}
-		options = append(options, deploy.WithRPCHost(privateIP))
+		options = append(options, deploy.WithRPCListen("0.0.0.0:0"), deploy.WithRPCHost(privateIP))
 
 		global, err = deploy.Node(options...)
 

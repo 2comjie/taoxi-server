@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package taoxi.shared;
+
+option go_package = "github.com/2comjie/taoxi-server/pb/shared;pbShared";
+
+enum ActorType{
+  Unknown = 0;
+  Player = 1;
+}

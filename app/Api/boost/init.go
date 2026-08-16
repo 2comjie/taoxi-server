@@ -8,8 +8,8 @@ import (
 
 	"github.com/2comjie/taoxi-server/app/Api/config"
 	"github.com/2comjie/taoxi-server/app/Api/items"
-
 	"github.com/2comjie/taoxi-server/app/Api/login"
+	"github.com/2comjie/taoxi-server/app/Api/mock"
 	"github.com/2comjie/taoxi-server/app/Api/payment"
 	"github.com/2comjie/taoxi-server/internal/deploy/external"
 	nodeDeploy "github.com/2comjie/taoxi-server/internal/deploy/node"
@@ -46,6 +46,10 @@ func Init() {
 	openGroup := eg.Group("open")
 	openGroup.Use(auth.Cors())
 
+	serverGroup := eg.Group("x")
+	serverGroup.Use(auth.Cors())
+	serverGroup.Use(extract.ClientExtract())
+
 	asynqServer := asynqx.NewServer(external.RedisAsynq, map[string]int{"default": 1})
 	args := modules.Modules{
 		Engine:      eg,
@@ -53,6 +57,7 @@ func Init() {
 		OpenGroup:   openGroup,
 		Cron:        systemCron,
 		AsynqServer: asynqServer,
+		ServerGroup: serverGroup,
 	}
 
 	// web 模块初始化
@@ -108,6 +113,7 @@ func Init() {
 	config.Init(args)
 	items.Init(args)
 	payment.Init(args)
+	mock.Init(args, nodeDeploy.App())
 
 	err := nodeDeploy.App().Run()
 

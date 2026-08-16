@@ -1,0 +1,7 @@
+- id: player
+  routes:
+    - 1
+  target:
+    mode: actor
+    service: player
+    actor_key_resolver: player

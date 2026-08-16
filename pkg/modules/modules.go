@@ -12,4 +12,6 @@ type Modules struct {
 	OpenGroup   *gin.RouterGroup
 	Cron        *cron.Cron
 	AsynqServer *asynqx.Server
+
+	ServerGroup *gin.RouterGroup
 }

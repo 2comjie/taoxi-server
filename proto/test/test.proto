@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package taoxi.test;
 
-option go_package = "github.com/2comjie/taoxi-server/pb/test;test";
+option go_package = "github.com/2comjie/taoxi-server/pb/test;pbTest";
 
 message Test {
   string name = 1;

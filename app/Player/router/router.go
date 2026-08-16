@@ -6,11 +6,11 @@ import (
 
 	"github.com/2comjie/taoxi-server/app/Player/player"
 	pbPlayer "github.com/2comjie/taoxi-server/pb/player"
+	"github.com/2comjie/taoxi-server/pkg/message_router"
 	"github.com/2comjie/wali/actor"
 	"github.com/2comjie/wali/actor/actorDef"
 	"github.com/2comjie/wali/app/node"
 	"github.com/2comjie/wali/logx"
-	"google.golang.org/protobuf/proto"
 )
 
 type RouteArgs struct {
@@ -38,27 +38,9 @@ func Init(args RouteArgs, root *node.Router) {
 
 func initPlayerRouter(args RouteArgs, root *node.Router) {
 	playerActorGroup := actor.NewRouteGroup[*player.Player](root, args.PlayerActorSystem, actor.ActivationLoad)
-
-	playerActorGroup.Handle(uint32(pbPlayer.ReqType_Hi), func(actorValue *player.Player, pid actorDef.PID, ctx *node.Context) error {
-		hiReq := &pbPlayer.HiReq{}
-		err := proto.Unmarshal(ctx.Request.Body, hiReq)
-		if err != nil {
-			return err
-		}
-		// 加个proto 的 消息转换？
-		logx.Infof("收到 hi 请求 %s", hiReq.Name)
-		hiRsp := &pbPlayer.HiRsp{
-			Msg: fmt.Sprintf("hi %s %d", hiReq.Name, actorValue.Level),
-		}
-		data, err := proto.Marshal(hiRsp)
-		if err != nil {
-			return err
-		}
-		err = ctx.Reply(data)
-		if err != nil {
-			return err
-		}
+	message_router.RegActor(playerActorGroup, uint32(pbPlayer.ReqType_Hi), func(actorValue *player.Player, _ actorDef.PID, _ *node.Context, req *pbPlayer.HiReq, rsp *pbPlayer.HiRsp) error {
+		logx.Infof("收到 hi 请求 %s", req.Name)
+		rsp.Msg = fmt.Sprintf("hi %s %d", req.Name, actorValue.Level)
 		return nil
 	})
-
 }

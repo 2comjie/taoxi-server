@@ -14,7 +14,7 @@ import (
 )
 
 type RouteArgs struct {
-	PlayerActorSystem *actor.System[*player.Player]
+	PlayerActorManager *actor.Manager[*player.Player]
 }
 
 func Init(args RouteArgs, root *node.Router) {
@@ -37,7 +37,7 @@ func Init(args RouteArgs, root *node.Router) {
 }
 
 func initPlayerRouter(args RouteArgs, root *node.Router) {
-	playerActorGroup := actor.NewRouteGroup[*player.Player](root, args.PlayerActorSystem, actor.ActivationLoad)
+	playerActorGroup := actor.NewRouteGroup[*player.Player](root, args.PlayerActorManager, actor.ActivationLoad)
 	message_router.RegActor(playerActorGroup, uint32(pbPlayer.ReqType_Hi), func(actorValue *player.Player, _ actorDef.PID, _ *node.Context, req *pbPlayer.HiReq, rsp *pbPlayer.HiRsp) error {
 		logx.Infof("收到 hi 请求 %s", req.Name)
 		rsp.Msg = fmt.Sprintf("hi %s %d", req.Name, actorValue.Level)

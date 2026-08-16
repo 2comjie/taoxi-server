@@ -21,8 +21,8 @@ import (
 )
 
 func Init(app *deploy.NodeApp, rpcServer *grpc.Server) {
-
-	playerActorSystem := actor.NewSystem(context.Background(), actorDef.Type(pbShared.ActorType_Player), actorGuard.New(app.Instance().ID, external.RedisGame()), func(runCtx context.Context, pid actorDef.PID) (*player.Player, error) {
+	actorSystem := actor.NewSystem(rpcServer)
+	manager := actor.Register(actorSystem, actorDef.Type(pbShared.ActorType_Player), actorGuard.New(app.Instance().ID, external.RedisGame()), func(runCtx context.Context, pid actorDef.PID) (*player.Player, error) {
 		return LoadPlayer(runCtx, cast.ToUint64(pid.Key))
 	}, actor.RunnerConfig{
 		QueueCap: 1000,
@@ -30,11 +30,9 @@ func Init(app *deploy.NodeApp, rpcServer *grpc.Server) {
 	})
 
 	// 初始化路由
-	router.Init(router.RouteArgs{PlayerActorSystem: playerActorSystem}, app.Router())
+	router.Init(router.RouteArgs{PlayerActorManager: manager}, app.Router())
 
-	actorServer := actor.NewServer(rpcServer)
-	actor.NewRPCRouteGroup(actorServer, playerActorSystem)
-	if err := app.AddComponent(actorServer); err != nil {
+	if err := app.AddComponent(actorSystem); err != nil {
 		panic(err)
 	}
 }

@@ -17,6 +17,8 @@ type Player struct {
 	Level          int32 `json:"level"`
 
 	LevelUpDt time.Duration `json:"level_up_dt"`
+
+	NeedStop bool `json:"-"`
 }
 
 func (p *Player) OnStart(ctx actorDef.ActorStartCtx) error {
@@ -32,6 +34,10 @@ func (p *Player) OnUpdate(ctx actorDef.ActorUpdateCtx) time.Duration {
 		p.LevelUpDt = 5 * time.Second
 		p.Level++
 		p.Infof("level up %d", p.Level)
+	}
+
+	if p.NeedStop {
+		ctx.Unload()
 	}
 	return 0
 }

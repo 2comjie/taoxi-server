@@ -24,8 +24,9 @@ const (
 type ReqType int32
 
 const (
-	ReqType_Unknow ReqType = 0
-	ReqType_Hi     ReqType = 1
+	ReqType_Unknow  ReqType = 0
+	ReqType_Hi      ReqType = 1
+	ReqType_Offload ReqType = 2
 )
 
 // Enum value maps for ReqType.
@@ -33,10 +34,12 @@ var (
 	ReqType_name = map[int32]string{
 		0: "Unknow",
 		1: "Hi",
+		2: "Offload",
 	}
 	ReqType_value = map[string]int32{
-		"Unknow": 0,
-		"Hi":     1,
+		"Unknow":  0,
+		"Hi":      1,
+		"Offload": 2,
 	}
 )
 
@@ -155,6 +158,78 @@ func (x *HiRsp) GetMsg() string {
 	return ""
 }
 
+type OffloadReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OffloadReq) Reset() {
+	*x = OffloadReq{}
+	mi := &file_player_player_client_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OffloadReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OffloadReq) ProtoMessage() {}
+
+func (x *OffloadReq) ProtoReflect() protoreflect.Message {
+	mi := &file_player_player_client_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OffloadReq.ProtoReflect.Descriptor instead.
+func (*OffloadReq) Descriptor() ([]byte, []int) {
+	return file_player_player_client_proto_rawDescGZIP(), []int{2}
+}
+
+type OffloadRsp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OffloadRsp) Reset() {
+	*x = OffloadRsp{}
+	mi := &file_player_player_client_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OffloadRsp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OffloadRsp) ProtoMessage() {}
+
+func (x *OffloadRsp) ProtoReflect() protoreflect.Message {
+	mi := &file_player_player_client_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OffloadRsp.ProtoReflect.Descriptor instead.
+func (*OffloadRsp) Descriptor() ([]byte, []int) {
+	return file_player_player_client_proto_rawDescGZIP(), []int{3}
+}
+
 var File_player_player_client_proto protoreflect.FileDescriptor
 
 const file_player_player_client_proto_rawDesc = "" +
@@ -163,11 +238,16 @@ const file_player_player_client_proto_rawDesc = "" +
 	"\x05HiReq\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"\x19\n" +
 	"\x05HiRsp\x12\x10\n" +
-	"\x03msg\x18\x01 \x01(\tR\x03msg*\x1d\n" +
+	"\x03msg\x18\x01 \x01(\tR\x03msg\"\f\n" +
+	"\n" +
+	"OffloadReq\"\f\n" +
+	"\n" +
+	"OffloadRsp**\n" +
 	"\aReqType\x12\n" +
 	"\n" +
 	"\x06Unknow\x10\x00\x12\x06\n" +
-	"\x02Hi\x10\x01B4Z2github.com/2comjie/taoxi-server/pb/player;pbPlayerb\x06proto3"
+	"\x02Hi\x10\x01\x12\v\n" +
+	"\aOffload\x10\x02B4Z2github.com/2comjie/taoxi-server/pb/player;pbPlayerb\x06proto3"
 
 var (
 	file_player_player_client_proto_rawDescOnce sync.Once
@@ -182,11 +262,13 @@ func file_player_player_client_proto_rawDescGZIP() []byte {
 }
 
 var file_player_player_client_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_player_player_client_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_player_player_client_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_player_player_client_proto_goTypes = []any{
-	(ReqType)(0),  // 0: taoxi.player.ReqType
-	(*HiReq)(nil), // 1: taoxi.player.HiReq
-	(*HiRsp)(nil), // 2: taoxi.player.HiRsp
+	(ReqType)(0),       // 0: taoxi.player.ReqType
+	(*HiReq)(nil),      // 1: taoxi.player.HiReq
+	(*HiRsp)(nil),      // 2: taoxi.player.HiRsp
+	(*OffloadReq)(nil), // 3: taoxi.player.OffloadReq
+	(*OffloadRsp)(nil), // 4: taoxi.player.OffloadRsp
 }
 var file_player_player_client_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -207,7 +289,7 @@ func file_player_player_client_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_player_player_client_proto_rawDesc), len(file_player_player_client_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

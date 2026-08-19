@@ -1,6 +1,7 @@
 - id: player
   routes:
     - 1
+    - 2
   target:
     mode: actor
     service: player

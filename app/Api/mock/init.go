@@ -11,6 +11,8 @@ import (
 
 func Init(args modules.Modules, app *deploy.NodeApp) {
 	Register(uint32(pbPlayer.ReqType_Hi), &pbPlayer.HiReq{}, &pbPlayer.HiRsp{})
+	Register(uint32(pbPlayer.ReqType_Offload), &pbPlayer.OffloadReq{}, &pbPlayer.OffloadRsp{})
+
 	router.Init(args, app)
 }
 

@@ -8,7 +8,6 @@ import (
 	"github.com/2comjie/nova/logx"
 	mockTypes "github.com/2comjie/taoxi-server/app/Api/mock/types"
 	"github.com/2comjie/taoxi-server/pkg/stderr"
-	"github.com/spf13/cast"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -51,7 +50,7 @@ func GateMock(ctx context.Context, app *deploy.NodeApp, req *mockTypes.GateMockR
 		return nil, stderr.InternalServerError("编码请求失败")
 	}
 
-	responseBody, replied, err := app.MockGateCall(ctx, cast.ToString(req.Uid), req.Route, body)
+	responseBody, replied, err := app.MockGateCall(ctx, req.Uid, req.Route, body)
 	if err != nil {
 		logx.Errorf("mock: Gate请求失败 uid=%d route=%d err=%v", req.Uid, req.Route, err)
 		return nil, stderr.InternalServerError("Gate请求失败")

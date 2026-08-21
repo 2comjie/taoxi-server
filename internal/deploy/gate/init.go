@@ -2,6 +2,7 @@ package gateDeploy
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/2comjie/nova/app/gate"
@@ -104,12 +105,12 @@ func Init(options ...deploy.Option) {
 			panic(fmt.Errorf("gateDeploy: 初始化JWT验签公钥失败: %w", err))
 		}
 		options = append(options, deploy.WithNetworkOptions(
-			network.WithAuther(network.AuthFunc(func(token []byte) (uid string, err error) {
-				uid, err = jwt.Auth(token)
+			network.WithAuther(network.AuthFunc(func(token []byte) (uint64, error) {
+				uid, err := jwt.Auth(token)
 				if err != nil {
-					return "", err
+					return 0, err
 				}
-				return uid, nil
+				return strconv.ParseUint(uid, 10, 64)
 			})),
 			network.WithListener(tcpListener),
 			network.WithListener(kcpListener),

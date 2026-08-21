@@ -12,6 +12,7 @@ import (
 	"github.com/2comjie/taoxi-server/flags"
 	"github.com/2comjie/taoxi-server/internal/deploy/external"
 	"github.com/2comjie/taoxi-server/internal/deploy/instruction"
+	"github.com/2comjie/taoxi-server/internal/push"
 	"github.com/2comjie/taoxi-server/pkg/pprof"
 )
 
@@ -63,11 +64,11 @@ func Init(options ...deploy.Option) {
 		options = append(options, deploy.WithRPCListen("0.0.0.0:0"), deploy.WithRPCHost(privateIP))
 
 		global, err = deploy.Node(options...)
-
-		logx.Infof("节点启动 %+v", global.Instance())
 		if err != nil {
 			panic(err)
 		}
+		push.Init(global)
+		logx.Infof("节点启动 %+v", global.Instance())
 	})
 }
 

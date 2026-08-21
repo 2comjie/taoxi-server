@@ -1,6 +1,7 @@
 package message_router
 
 import (
+	"context"
 	"reflect"
 	"sync"
 
@@ -30,6 +31,25 @@ func RegActor[T actorDef.Actor, Req proto.Message, Rsp proto.Message](router *ac
 		return handle(ctx, reqPool, rspPool, func(req Req, rsp Rsp) error {
 			return handler(actorValue, pid, ctx, req, rsp)
 		})
+	})
+}
+
+func RegActorRPC[T actorDef.Actor, Req proto.Message, Rsp proto.Message](router *actor.RPCRouteGroup[T], route uint32, handler func(actorValue T, pid actorDef.PID, ctx context.Context, req Req, rsp Rsp) error) {
+	reqPool := newMessagePool[Req]()
+	rspPool := newMessagePool[Rsp]()
+	router.Handle(route, func(actorValue T, pid actorDef.PID, ctx context.Context, message actor.Message) ([]byte, error) {
+		req := reqPool.Get().(Req)
+		defer release(reqPool, req)
+		if err := proto.Unmarshal(message.Body, req); err != nil {
+			return nil, err
+		}
+
+		rsp := rspPool.Get().(Rsp)
+		defer release(rspPool, rsp)
+		if err := handler(actorValue, pid, ctx, req, rsp); err != nil {
+			return nil, err
+		}
+		return proto.Marshal(rsp)
 	})
 }
 

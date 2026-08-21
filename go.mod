@@ -4,7 +4,7 @@ go 1.24.3
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/2comjie/nova v0.2.1
+	github.com/2comjie/nova v0.2.2
 	github.com/2comjie/nova/locator/redis v0.2.0
 	github.com/2comjie/nova/registry/redis v0.2.0
 	github.com/dgraph-io/ristretto/v2 v2.4.0
@@ -33,6 +33,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
+	github.com/alicebob/miniredis/v2 v2.38.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
@@ -74,6 +75,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/xtaci/kcp-go/v5 v5.6.72 // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	github.com/zclconf/go-cty v1.14.4 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

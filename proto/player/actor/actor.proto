@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package taoxi.player.actor;
+
+option go_package = "github.com/2comjie/taoxi-server/pb/player/actor;pbPlayerActor";
+
+message Player {
+  uint64 uid = 1;
+  int64 last_offline_time = 2;
+}

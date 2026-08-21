@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package taoxi.player.actor_rpc;
+
+option go_package = "github.com/2comjie/taoxi-server/pb/player/actor_rpc;pbPlayerActorRPC";
+
+enum Route {
+  Unknown = 0;
+  GetState = 1;
+}
+
+message GetStateReq {
+}
+
+message GetStateRsp {
+  uint64 uid = 1;
+  int64 last_offline_time = 2;
+}

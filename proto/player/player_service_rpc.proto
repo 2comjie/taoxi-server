@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package taoxi.player.service_rpc;
+
+option go_package = "github.com/2comjie/taoxi-server/pb/player/service_rpc;pbPlayerServiceRPC";
+
+message PingReq {
+}
+
+message PingRsp {
+  string instance_id = 1;
+}
+
+service PlayerService {
+  rpc Ping(PingReq) returns (PingRsp);
+}

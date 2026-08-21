@@ -1,7 +1,13 @@
-- id: player
+- id: player-service
   routes:
     - 1
+  target:
+    mode: balance
+    service: player
+- id: player-actor
+  routes:
     - 2
+    - 4
   target:
     mode: actor
     service: player

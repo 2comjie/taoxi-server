@@ -24,9 +24,11 @@ const (
 type ReqType int32
 
 const (
-	ReqType_Unknow  ReqType = 0
-	ReqType_Hi      ReqType = 1
-	ReqType_Offload ReqType = 2
+	ReqType_Unknow     ReqType = 0
+	ReqType_Hi         ReqType = 1
+	ReqType_Offload    ReqType = 2
+	ReqType_PlayerSync ReqType = 3
+	ReqType_LoadPlayer ReqType = 4
 )
 
 // Enum value maps for ReqType.
@@ -35,11 +37,15 @@ var (
 		0: "Unknow",
 		1: "Hi",
 		2: "Offload",
+		3: "PlayerSync",
+		4: "LoadPlayer",
 	}
 	ReqType_value = map[string]int32{
-		"Unknow":  0,
-		"Hi":      1,
-		"Offload": 2,
+		"Unknow":     0,
+		"Hi":         1,
+		"Offload":    2,
+		"PlayerSync": 3,
+		"LoadPlayer": 4,
 	}
 )
 
@@ -230,6 +236,78 @@ func (*OffloadRsp) Descriptor() ([]byte, []int) {
 	return file_player_player_client_proto_rawDescGZIP(), []int{3}
 }
 
+type LoadPlayerReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoadPlayerReq) Reset() {
+	*x = LoadPlayerReq{}
+	mi := &file_player_player_client_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoadPlayerReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoadPlayerReq) ProtoMessage() {}
+
+func (x *LoadPlayerReq) ProtoReflect() protoreflect.Message {
+	mi := &file_player_player_client_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoadPlayerReq.ProtoReflect.Descriptor instead.
+func (*LoadPlayerReq) Descriptor() ([]byte, []int) {
+	return file_player_player_client_proto_rawDescGZIP(), []int{4}
+}
+
+type LoadPlayerRsp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoadPlayerRsp) Reset() {
+	*x = LoadPlayerRsp{}
+	mi := &file_player_player_client_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoadPlayerRsp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoadPlayerRsp) ProtoMessage() {}
+
+func (x *LoadPlayerRsp) ProtoReflect() protoreflect.Message {
+	mi := &file_player_player_client_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoadPlayerRsp.ProtoReflect.Descriptor instead.
+func (*LoadPlayerRsp) Descriptor() ([]byte, []int) {
+	return file_player_player_client_proto_rawDescGZIP(), []int{5}
+}
+
 var File_player_player_client_proto protoreflect.FileDescriptor
 
 const file_player_player_client_proto_rawDesc = "" +
@@ -242,12 +320,18 @@ const file_player_player_client_proto_rawDesc = "" +
 	"\n" +
 	"OffloadReq\"\f\n" +
 	"\n" +
-	"OffloadRsp**\n" +
+	"OffloadRsp\"\x0f\n" +
+	"\rLoadPlayerReq\"\x0f\n" +
+	"\rLoadPlayerRsp*J\n" +
 	"\aReqType\x12\n" +
 	"\n" +
 	"\x06Unknow\x10\x00\x12\x06\n" +
 	"\x02Hi\x10\x01\x12\v\n" +
-	"\aOffload\x10\x02B4Z2github.com/2comjie/taoxi-server/pb/player;pbPlayerb\x06proto3"
+	"\aOffload\x10\x02\x12\x0e\n" +
+	"\n" +
+	"PlayerSync\x10\x03\x12\x0e\n" +
+	"\n" +
+	"LoadPlayer\x10\x04B4Z2github.com/2comjie/taoxi-server/pb/player;pbPlayerb\x06proto3"
 
 var (
 	file_player_player_client_proto_rawDescOnce sync.Once
@@ -262,13 +346,15 @@ func file_player_player_client_proto_rawDescGZIP() []byte {
 }
 
 var file_player_player_client_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_player_player_client_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_player_player_client_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_player_player_client_proto_goTypes = []any{
-	(ReqType)(0),       // 0: taoxi.player.ReqType
-	(*HiReq)(nil),      // 1: taoxi.player.HiReq
-	(*HiRsp)(nil),      // 2: taoxi.player.HiRsp
-	(*OffloadReq)(nil), // 3: taoxi.player.OffloadReq
-	(*OffloadRsp)(nil), // 4: taoxi.player.OffloadRsp
+	(ReqType)(0),          // 0: taoxi.player.ReqType
+	(*HiReq)(nil),         // 1: taoxi.player.HiReq
+	(*HiRsp)(nil),         // 2: taoxi.player.HiRsp
+	(*OffloadReq)(nil),    // 3: taoxi.player.OffloadReq
+	(*OffloadRsp)(nil),    // 4: taoxi.player.OffloadRsp
+	(*LoadPlayerReq)(nil), // 5: taoxi.player.LoadPlayerReq
+	(*LoadPlayerRsp)(nil), // 6: taoxi.player.LoadPlayerRsp
 }
 var file_player_player_client_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -289,7 +375,7 @@ func file_player_player_client_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_player_player_client_proto_rawDesc), len(file_player_player_client_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

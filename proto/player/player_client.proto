@@ -8,6 +8,8 @@ enum ReqType{
   Unknow = 0;
   Hi = 1;
   Offload = 2;
+  PlayerSync = 3;
+  LoadPlayer = 4;
 }
 
 message HiReq{
@@ -20,4 +22,9 @@ message HiRsp{
 message OffloadReq{
 }
 message OffloadRsp{
+}
+
+message LoadPlayerReq {
+}
+message LoadPlayerRsp {
 }
